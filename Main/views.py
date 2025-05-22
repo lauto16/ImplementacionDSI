@@ -36,7 +36,11 @@ def registrar_resultado_revision_manual(request: HttpRequest) -> HttpResponse:
 
         if action == "get_eventos_sismicos":
             # eventos de prueba ---------------------------------------------------------
+            """
 
+            Apartir de aca se generan todos los objetos necesarios para hacer la prueba del caso de uso ----
+
+            """
             # estado para ambos eventos
             no_revisado = Estado(ambito="EventoSismico", nombreEstado="NoRevisado")
 
@@ -52,33 +56,80 @@ def registrar_resultado_revision_manual(request: HttpRequest) -> HttpResponse:
             sismografo_evento1 = Sismografo(estacionSismologica=estacion_sismologica_evento1, fechaAdquisicion=datetime.strptime("12/10/1998 12:30", "%d/%m/%Y %H:%M"), identificadorSismografo=1234, nroSerie=9089989898)
             sismografo_evento2 = Sismografo(estacionSismologica=estacion_sismologica_evento2,fechaAdquisicion=datetime.strptime("12/10/1999 10:12", "%d/%m/%Y %H:%M"), identificadorSismografo=1235, nroSerie=9089989899)
 
+            # fechas eventos
             fecha_inicio_evento1 = datetime.strptime(
                 "12/12/2004 12:45", "%d/%m/%Y %H:%M"
             )
             fecha_fin_evento1 = datetime.strptime("12/12/2004 12:50", "%d/%m/%Y %H:%M")
+
+            fecha_inicio_evento2 = datetime.strptime(
+                "15/07/2010 09:30", "%d/%m/%Y %H:%M"
+            )
+            fecha_fin_evento2 = datetime.strptime("15/07/2010 09:45", "%d/%m/%Y %H:%M")
+
+            # magnitudes eventos
             magnitud_evento1 = MagnitudRichter("escala base", 7.1)
+            magnitud_evento2 = MagnitudRichter("escala base", 6.3)
+
+            # origenes de generacion eventos
             origen_de_generacion_evento1 = OrigenDeGeneracion(
                 "Capital zona rural", "Cordoba"
             )
+            origen_de_generacion_evento2 = OrigenDeGeneracion(
+                "Zona costera", "San Juan"
+            )
+
+            # alcance eventos
             alcance_evento1 = AlcanceSismo(
                 nombre="Zonas aledañas camino Alta Gracia", descripcion="Zonas aledañas"
             )
+            alcance_evento2 = AlcanceSismo(
+                nombre="Zonas aledañas tiramay", descripcion="Zonas aledañas"
+            )
+
+            # clasificaion sismo eventos
             clasificacion_sismo_evento1 = ClasificacionSismo(12.3, 15.6, "distancia")
+            clasificacion_sismo_evento2 = ClasificacionSismo(20.4, 10.1, "distancia")
+
+            # cambio estado eventos
             cambio_estado_evento1 = CambioEstado(
                 fechaHoraInicio=fecha_inicio_evento1,
                 fechaHoraFin=None,
                 estado=no_revisado,
                 responsableInspeccion=empleado
             )
+            cambio_estado_evento2 = CambioEstado(
+                fechaHoraInicio=fecha_inicio_evento2,
+                fechaHoraFin=None,
+                estado=no_revisado,
+                responsableInspeccion=empleado
+            )
+
+            # estado para serie temporal eventos
             estado_serie_temporal = Estado(
                 ambito="SerieTemporal", nombreEstado="SinAlarma"
             )
+
+            # muestra sismica eventos
             muestra_sismica_evento1 = MuestraSismica(fecha_inicio_evento1)
-            tipo_dato_evento = TipoDeDato("altura_terreno", "metros", 150)
             muestra_sismica_evento1.crearDetalleMuestra(
-                valor=120.54, tipo_dato=tipo_dato_evento
+                            valor=120.54, tipo_dato=tipo_dato_evento
+                        )
+            muestra_sismica_evento2 = MuestraSismica(fecha_inicio_evento2)
+            muestra_sismica_evento2.crearDetalleMuestra(
+                valor=1200.54, tipo_dato=tipo_dato_evento
             )
+
+            # tipo dato eventos
+            tipo_dato_evento = TipoDeDato("altura_terreno", "metros", 150)
+
+            # listas series temporales y muestras sismicas eventos
             lista_muestras_sismicas_evento1 = [muestra_sismica_evento1]
+            lista_series_temporales_evento1 = [serie_temporal_evento1]
+            lista_muestras_sismicas_evento2 = [muestra_sismica_evento2]
+            lista_series_temporales_evento2 = [serie_temporal_evento2]
+
+            # series temporales eventos
             serie_temporal_evento1 = SerieTemporal(
                 condicionAlarma="temblar",
                 fechaHoraInicioRegistroMuestras=fecha_inicio_evento1,
@@ -87,9 +138,16 @@ def registrar_resultado_revision_manual(request: HttpRequest) -> HttpResponse:
                 estado=estado_serie_temporal,
                 muestrasSismica=lista_muestras_sismicas_evento1,
             )
+            serie_temporal_evento2 = SerieTemporal(
+            condicionAlarma="temblar",
+            fechaHoraInicioRegistroMuestras=fecha_inicio_evento2,
+            fechaHoraRegistros=fecha_fin_evento2,
+            frecuenciaMuestreo=2.5,
+            estado=estado_serie_temporal,
+            muestrasSismica=lista_muestras_sismicas_evento2,
+            )
 
-            lista_series_temporales_evento1 = [serie_temporal_evento1]
-
+            # eventos
             evento1 = EventoSismico(
                 id=1,
                 fechaHoraFin=fecha_fin_evento1,
@@ -106,42 +164,6 @@ def registrar_resultado_revision_manual(request: HttpRequest) -> HttpResponse:
                 cambiosEstado=[cambio_estado_evento1],
                 seriesTemporales=lista_series_temporales_evento1,
             )
-
-            fecha_inicio_evento2 = datetime.strptime(
-                "15/07/2010 09:30", "%d/%m/%Y %H:%M"
-            )
-            fecha_fin_evento2 = datetime.strptime("15/07/2010 09:45", "%d/%m/%Y %H:%M")
-            magnitud_evento2 = MagnitudRichter("escala base", 6.3)
-            origen_de_generacion_evento2 = OrigenDeGeneracion(
-                "Zona costera", "San Juan"
-            )
-            alcance_evento2 = AlcanceSismo(
-                nombre="Zonas aledañas tiramay", descripcion="Zonas aledañas"
-            )
-            clasificacion_sismo_evento2 = ClasificacionSismo(20.4, 10.1, "distancia")
-            cambio_estado_evento2 = CambioEstado(
-                fechaHoraInicio=fecha_inicio_evento2,
-                fechaHoraFin=None,
-                estado=no_revisado,
-                responsableInspeccion=empleado
-            )
-
-            muestra_sismica_evento2 = MuestraSismica(fecha_inicio_evento2)
-            muestra_sismica_evento2.crearDetalleMuestra(
-                valor=1200.54, tipo_dato=tipo_dato_evento
-            )
-
-            lista_muestras_sismicas_evento2 = [muestra_sismica_evento2]
-            serie_temporal_evento2 = SerieTemporal(
-                condicionAlarma="temblar",
-                fechaHoraInicioRegistroMuestras=fecha_inicio_evento2,
-                fechaHoraRegistros=fecha_fin_evento2,
-                frecuenciaMuestreo=2.5,
-                estado=estado_serie_temporal,
-                muestrasSismica=lista_muestras_sismicas_evento2,
-            )
-
-            lista_series_temporales_evento2 = [serie_temporal_evento2]
 
             evento2 = EventoSismico(
                 id=2,
@@ -163,6 +185,7 @@ def registrar_resultado_revision_manual(request: HttpRequest) -> HttpResponse:
 
             eventos = [evento1.as_dict(), evento2.as_dict()]
 
+            # devolver los datos de ambos eventos al frontend
             return JsonResponse(eventos, safe=False)
 
         else:
