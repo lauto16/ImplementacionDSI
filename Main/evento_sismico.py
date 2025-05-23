@@ -39,6 +39,9 @@ class Estado:
         self.ambito: str = ambito
         self.nombreEstado: str = nombreEstado
 
+    def esAutodetectado(self) -> bool:
+        return self.nombreEstado == 'Autodetectado'
+
 
 class TipoDeDato:
     def __init__(
@@ -203,10 +206,23 @@ class EventoSismico:
         self.alcanceSismo = alcanceSismo
         self.estadoActual = estadoActual
         self.clasificacion = clasificacion
-        self.cambiosEstado = (cambiosEstado,)
+        self.cambiosEstado = cambiosEstado
         self.seriesTemporales = seriesTemporales
+    
+    def getValorMagnitud(self) -> float:
+        return self.magnitud.numero
 
-    def as_dict(self):
+    def obtenerDatos(self) -> dict:
+        return {
+            'valorMagnitud': self.getValorMagnitud(),
+            'latitudHipocentro': self.latitudHipocentro,
+            'latitudEpicentro': self.latitudEpicentro,
+            'longitudHipocentro': self.longitudHipocentro,
+            'longitudEpicentro': self.longitudEpicentro,
+            'fechaHoraOcurrencia': self.fechaHoraOcurrencia
+        }
+
+    def as_dict(self) -> dict:
         return {
             "id": self.id,
             "fechaHoraFin": (
@@ -236,5 +252,5 @@ class EventoSismico:
             "alcanceSismo": self.alcanceSismo.getNombre(),
             "estadoActual": self.estadoActual.nombreEstado,
             "clasificacion": self.clasificacion.getNombre(),
-            "cambiosEstado": [x[0].estado.nombreEstado for x in self.cambiosEstado],
+            "cambiosEstado": [x.estado.nombreEstado for x in self.cambiosEstado],
         }

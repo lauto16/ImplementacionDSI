@@ -1,5 +1,30 @@
 let eventosSismicos = [];
 
+
+function tomarSelEventoSis(idSeleccionado){
+  const url = new URL(window.location.href);
+  url.searchParams.set('action', 'tomar_sel_evento_sismico');
+  url.searchParams.set('id_evento', idSeleccionado)
+
+  fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Error en la solicitud');
+    return response.json();
+  })
+  .then(data => {
+    //
+  })
+  .catch(error => {
+    console.error(error);
+  });
+}
+
+
 function getEventosSismicos() {
   const url = new URL(window.location.href);
   url.searchParams.set('action', 'get_eventos_sismicos');
@@ -47,7 +72,8 @@ function vaciarFormulario() {
 function eventoSeleccionadoChange() {
   const select = document.getElementById('eventoSelect');
   const idSeleccionado = select.value;
-
+  tomarSelEventoSis(idSeleccionado)
+  
   vaciarFormulario();
 
   if (!idSeleccionado) {
@@ -78,6 +104,9 @@ function eventoSeleccionadoChange() {
     } else {
       document.getElementById('coordenadas').value = "";
     }
+
+    
+
   } else {
     console.warn('Evento no encontrado para el id:', idSeleccionado);
   }

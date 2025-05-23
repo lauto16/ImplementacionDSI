@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menú Central</title>
+  <link href="" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/opciones.css' %}">
+</head>
+<body>
+  <div class="container d-flex justify-content-center align-items-center center-container">
+    <div class="card shadow p-4" style="margin-top: 100px;">
+      <h4 class="text-center mb-4">Seleccione una opción</h4>
+      <div class="list-group">
+        <a href="registrar_resultado_revision_manual" class="list-group-item list-group-item-action">Registrar resultado revisión manual</a>
+        <a href="#" class="list-group-item list-group-item-action">Opción 2</a>
+        <a href="#" class="list-group-item list-group-item-action">Opción 3</a>
+        <a href="#" class="list-group-item list-group-item-action">Opción 4</a>
+        <a href="#" class="list-group-item list-group-item-action">Opción 5</a>
+      </div>
+    </div>
+  </div>
+  <script src="{% static 'js/opciones.js' %}"></script>
+</body>
+</html>
