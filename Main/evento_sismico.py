@@ -50,7 +50,7 @@ class Estado:
 
     def esBloqueadoEnRevision(self) -> bool:
         return self.nombreEstado == 'BloqueadoEnRevision'
-    
+
 
 class TipoDeDato:
     def __init__(
@@ -72,6 +72,7 @@ class DetalleMuestraSismica:
         self.tipoDeDato = tipoDeDato
 
     def getDatos(self) -> dict:
+        # TODO preguntar y revisar si LONGITUD, FREC Y VELONDA son instancias de TIPODEDATO
         return {"valor": self.valor, "tipo_de_dato": self.tipoDeDato}
 
 
@@ -83,6 +84,10 @@ class MuestraSismica:
     def crearDetalleMuestra(self, valor, tipo_dato: TipoDeDato) -> None:
         new_detalle = DetalleMuestraSismica(valor=valor, tipoDeDato=tipo_dato)
         self.detallesMuestraSismica.append(new_detalle)
+
+    def getDatos(self) -> None:
+        for detalleMS in self.detallesMuestraSismica:
+            detalleMS.getDatos()
 
 
 class SerieTemporal:
@@ -109,8 +114,30 @@ class SerieTemporal:
             "fechaHoraRegistros": self.fechaHoraRegistros,
             "frecuenciaMuestreo": self.frecuenciaMuestreo,
             "estado": self.estado.nombreEstado,
-            #'muestrasSismica': self.muestrasSismica,
+            # 'muestrasSismica': self.muestrasSismica,
         }
+
+    def getDatosMuestra(self, sismografos):
+        resultadoDatos = []
+        for muestraSismica in self.muestrasSismica:
+            # Le pasa la responsabilidad de iterar a muestra sismica (bucle anidado)
+            muestraSismica.getDatos()
+            if muestraSismica:
+                resultadoDatos.append(muestraSismica)
+
+        # TODO retornar datos y ES
+        # Itera los sismografos que llegan por parametro
+        sismografoRetorno = None
+        for sismografo in sismografos:
+            sisActual = sismografo.obtenerSismografo(self)
+            if sisActual:
+                sismografoSeleccionado = sisActual
+                break
+        if sismografoSeleccionado:
+            sismografoRetorno = sismografoSeleccionado.obtenerES()
+
+        resultado = [sismografoRetorno, resultadoDatos]
+        return resultado
 
 
 class Empleado:
@@ -147,9 +174,10 @@ class CambioEstado:
         if self.fechaHoraFin == None:
             return True
         return False
-    
+
     def setFechaHoraFin(self, fecha_actual: datetime) -> None:
         self.fechaHoraFin = fecha_actual
+
 
 class EstacionSismologica:
     def __init__(
@@ -178,6 +206,7 @@ class Sismografo:
         identificadorSismografo,
         nroSerie,
         estacionSismologica: EstacionSismologica,
+        seriesTemporales: list
     ) -> None:
         self.fechaAdquisicion = fechaAdquisicion
         self.identificadorSismografo = identificadorSismografo
@@ -185,6 +214,15 @@ class Sismografo:
         self.estado = None
         self.cambioEstado = None
         self.estacionSismologica = estacionSismologica
+        self.seriesTemporales = seriesTemporales
+
+    def obtenerSismografo(self, serieTemporal: SerieTemporal):
+        for actualST in self.seriesTemporales:
+            if actualST == serieTemporal:
+                return serieTemporal
+
+    def obtenerES(self):
+        return self.estacionSismologica.nombre
 
 
 class EventoSismico:
@@ -219,7 +257,7 @@ class EventoSismico:
         self.clasificacion = clasificacion
         self.cambiosEstado = cambiosEstado
         self.seriesTemporales = seriesTemporales
-    
+
     def getValorMagnitud(self) -> float:
         return self.magnitud.numero
 
@@ -268,12 +306,26 @@ class EventoSismico:
 
     def crearCambioEstado(self, fecha_actual: datetime, estado: Estado, empleado: Empleado) -> None:
         # en este momento no se le asigna empleado
-        nuevo_estado = CambioEstado(fechaHoraInicio=fecha_actual, fechaHoraFin=None, estado=estado, responsableInspeccion=None)
+        nuevo_estado = CambioEstado(
+            fechaHoraInicio=fecha_actual, fechaHoraFin=None, estado=estado, responsableInspeccion=None)
         self.cambiosEstado.append(nuevo_estado)
-        
+
     def bloquear(self, fecha_actual: datetime, estado: Estado) -> None:
         for cambio_estado in self.cambiosEstado:
             if cambio_estado.esActual():
                 cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
-                self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado)
-                
+                self.crearCambioEstado(
+                    fecha_actual=fecha_actual, estado=estado)
+
+    def getAlcance(self) -> None:
+        return self.alcanceSismo.getNombre()
+
+    def getClasificacion(self) -> None:
+        return self.clasificacion.getNombre()
+
+    def getOrigenGeneracion(self) -> None:
+        return self.origenGeneracion.getNombre()
+
+    def buscarSerieTemporal(self, sismografos) -> None:
+        for serieTemporal in self.seriesTemporales:
+            serieTemporal.getDatosMuestra(sismografos)
