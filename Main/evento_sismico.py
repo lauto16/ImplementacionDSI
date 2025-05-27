@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 class OrigenDeGeneracion:
     def __init__(self, descripcion: str, nombre: str) -> None:
         self.descripcion = descripcion
@@ -42,6 +45,12 @@ class Estado:
     def esAutodetectado(self) -> bool:
         return self.nombreEstado == 'Autodetectado'
 
+    def esAmbitoEventoSis(self) -> bool:
+        return self.ambito == 'EventoSismico'
+
+    def esBloqueadoEnRevision(self) -> bool:
+        return self.nombreEstado == 'BloqueadoEnRevision'
+    
 
 class TipoDeDato:
     def __init__(
@@ -128,17 +137,19 @@ class Sesion:
 
 
 class CambioEstado:
-    def __init__(self, fechaHoraInicio, fechaHoraFin, estado: Estado, responsableInspeccion: Empleado) -> None:
+    def __init__(self, fechaHoraInicio, fechaHoraFin, estado: Estado, responsableInspeccion) -> None:
         self.fechaHoraFin = fechaHoraFin
         self.fechaHoraInicio = fechaHoraInicio
         self.estado = estado
         self.responsableInspeccion = responsableInspeccion
 
-    def esEstadoActual(self) -> bool:
+    def esActual(self) -> bool:
         if self.fechaHoraFin == None:
             return True
         return False
-
+    
+    def setFechaHoraFin(self, fecha_actual: datetime) -> None:
+        self.fechaHoraFin = fecha_actual
 
 class EstacionSismologica:
     def __init__(
@@ -254,3 +265,15 @@ class EventoSismico:
             "clasificacion": self.clasificacion.getNombre(),
             "cambiosEstado": [x.estado.nombreEstado for x in self.cambiosEstado],
         }
+
+    def crearCambioEstado(self, fecha_actual: datetime, estado: Estado, empleado: Empleado) -> None:
+        # en este momento no se le asigna empleado
+        nuevo_estado = CambioEstado(fechaHoraInicio=fecha_actual, fechaHoraFin=None, estado=estado, responsableInspeccion=None)
+        self.cambiosEstado.append(nuevo_estado)
+        
+    def bloquear(self, fecha_actual: datetime, estado: Estado) -> None:
+        for cambio_estado in self.cambiosEstado:
+            if cambio_estado.esActual():
+                cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
+                self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado)
+                

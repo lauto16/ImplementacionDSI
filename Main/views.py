@@ -20,18 +20,41 @@ from django.views import View
 from django.shortcuts import render
 from datetime import datetime
 
+
 class GestorResultRevManual:
     def __init__(self) -> None:
         self.eventosAutodetectados = []
         self.estados = []
+        self.eventoSisActual = None
+        self.fechaHoraActual = None
+        self.estado_BloqueadoEnRevision = None
+
+    def getFechaHoraActual(self) -> datetime:
+        return datetime.now()
+
+    def tomarSelEventoSis(self, id_evento: int) -> None:
+        # se necesita buscar el evento elegio entre los autodetectados
+        self.eventoSisActual = self.getEventoAutodetectado(id=id_evento)
+        self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
+        self.fechaHoraActual = self.getFechaHoraActual()
+        self.bloquearEventoSis()
+
+    def getEventoAutodetectado(self, id: int):
+        for evento in self.eventosAutodetectados:
+            if id == evento.id:
+                return evento
+
+    def bloquearEventoSis(self) -> None:
+        self.eventoSisActual.bloquear(fecha_actual=self.fechaHoraActual, estado=self.estado_BloqueadoEnRevision)
 
     def ordenarEventosSisPorFyH(self) -> None:
         self.eventosAutodetectados.sort(key=lambda evento: evento.fechaHoraOcurrencia)
     
     def buscarEstadoBloqueadoEnRevision(self) -> Estado:
         for estado in self.estados:
-            if estado.ambito == 'EventoSismico':
-                if estado.nombreEstado == 'BloqueadoEnRevision':
+            if estado.esAmbitoEventoSis():
+                if estado.esBloqueadoEnRevision():
+                    self.bloquearEventoSis()
                     return estado
 
     def buscarEventosAutodetectados(self, eventos: list) -> list:
@@ -40,6 +63,7 @@ class GestorResultRevManual:
                     self.eventosAutodetectados.append(evento)
         self.ordenarEventosSisPorFyH()
         return self.eventosAutodetectados
+
 
 def opciones_sismografo(request: HttpRequest) -> HttpResponse:
     """
@@ -68,17 +92,17 @@ class InterfazResultRevManual(View):
         autodetectado = Estado(ambito="EventoSismico", nombreEstado="Autodetectado")
         sin_alarma = Estado(ambito="SerieTemporal", nombreEstado="SinAlarma")
         bloquedo_en_revision = Estado(ambito='EventoSismico', nombreEstado='BloqueadoEnRevision')
+
         self.gestor.estados.append(autodetectado)
         self.gestor.estados.append(sin_alarma)
         self.gestor.estados.append(bloquedo_en_revision)
 
         if action == 'tomar_sel_evento_sismico':
             id_evento = request.GET.get("id_evento")
-            estado_BloqueadoEnRevision = self.gestor.buscarEstadoBloqueadoEnRevision()
-            # HASTA ACA LLEGAMOS
+            self.gestor.tomarSelEventoSis(id_evento=id_evento)
+            
 
         if action == "get_eventos_sismicos":
-            # Generación de datos de prueba (idéntico a tu función original)
             tipo_dato_evento = TipoDeDato("altura_terreno", "metros", 150)
             
             empleado = Empleado(apellido='Doe', nombre='John', telefono='3516565784', mail='johndoe123@gmail.com')
@@ -123,11 +147,10 @@ class InterfazResultRevManual(View):
             evento2 = EventoSismico(id=2, fechaHoraFin=fecha_fin_2, fechaHoraOcurrencia=fecha_inicio_2, latitudEpicentro=-31.5370, longitudEpicentro=-68.5360, latitudHipocentro=-32.0000, longitudHipocentro=-67.5000, magnitud=magnitud2, origenGeneracion=origen2, alcanceSismo=alcance2, estadoActual=autodetectado, clasificacion=clasificacion2, cambiosEstado=[cambio2], seriesTemporales=[serie2])
 
             eventos = [evento1, evento2]
-        
+            
             eventos_autodetectados = self.gestor.buscarEventosAutodetectados(eventos=eventos)
-
-
             eventos_autodetectados_para_frontend = [x.as_dict() for x in eventos_autodetectados]
+
             # mostrarEventosSismicos()
             return JsonResponse(eventos_autodetectados_para_frontend, safe=False)
 
