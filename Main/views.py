@@ -70,16 +70,17 @@ class GestorResultRevManual:
         self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
         self.bloquearEventoSis()
         self.buscarDatosEventoSis()
-        # se hace al final -> self.mostrarDatosEventoSis()
-        self.buscarSerieTemporal()
-
-        print(f'ORDENADO POR ES: {self.ordenadoPorES}')
-
         datosEvenSis = {
             "alcanceEventoSis": self.alcanceEventoSis,
             "clasificacionEventoSis": self.clasificacionEventoSis,
             "origenGeneracionEventoSis": self.origenGeneracionEventoSis,
-        }  
+        }
+        # se hace al final -> self.mostrarDatosEventoSis()
+        datosSeriesTemporales = self.buscarSerieTemporal()
+        self.ordenarPorEstacion(datosSeriesTemporales=datosSeriesTemporales)
+
+        print(f'ORDENADO POR ES: {self.ordenadoPorES}')
+
         datos_entrega = []
         for i in range(len(self.ordenadoPorES)):
             datosSerieTemporal = {
@@ -87,8 +88,8 @@ class GestorResultRevManual:
                 'muestra': self.ordenadoPorES[i]["datosMuestras"],
             }
             datos_entrega.append(datosSerieTemporal)
-
-
+        self.llamarCUGenerarSismograma()
+        self.mostrarVisualizarMapaYDatos()
         return datos_entrega, datosEvenSis
 
     def getEventoAutodetectado(self, id: int):
@@ -102,7 +103,8 @@ class GestorResultRevManual:
         )
 
     def ordenarEventosSisPorFyH(self) -> None:
-        self.eventosAutodetectados.sort(key=lambda evento: evento.fechaHoraOcurrencia)
+        self.eventosAutodetectados.sort(
+            key=lambda evento: evento.fechaHoraOcurrencia)
 
     def buscarEstadoBloqueadoEnRevision(self) -> Estado:
         for estado in self.estados:
@@ -123,10 +125,7 @@ class GestorResultRevManual:
         self.origenGeneracionEventoSis = self.eventoSisActual.getOrigenGeneracion()
 
     def buscarSerieTemporal(self):
-        datosSeriesTemporales = self.eventoSisActual.buscarSerieTemporal(
-            sismografos=self.sismografos
-        )
-        self.ordenarPorEstacion(datosSeriesTemporales=datosSeriesTemporales)
+        return self.eventoSisActual.buscarSerieTemporal(sismografos=self.sismografos)
 
     def ordenarPorEstacion(self, datosSeriesTemporales: list) -> None:
         # Ordenar ES por nombre de A-Z
@@ -134,6 +133,12 @@ class GestorResultRevManual:
             datosSeriesTemporales,
             key=lambda dato: dato["estacionSismologica"].nombre.lower(),
         )
+
+    def llamarCUGenerarSismograma(self):
+        return "Se llamó al CU generar Sismograma"
+
+    def mostrarVisualizarMapaYDatos(self):
+        pass
 
 
 def opciones_sismografo(request: HttpRequest) -> HttpResponse:
