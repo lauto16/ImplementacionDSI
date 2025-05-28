@@ -8,6 +8,7 @@ class OrigenDeGeneracion(models.Model):
     def getNombre(self) -> str:
         return self.nombre
 
+
 class ClasificacionSismo(models.Model):
     kmProfundidadDesde = models.FloatField()
     kmProfundidadHasta = models.FloatField()
@@ -15,6 +16,7 @@ class ClasificacionSismo(models.Model):
 
     def getNombre(self) -> str:
         return self.nombre
+
 
 class MagnitudRichter(models.Model):
     descripcionMagnitud = models.CharField(max_length=200)
@@ -174,6 +176,7 @@ class EventoSismico(models.Model):
             "clasificacion": self.clasificacion.getNombre(),
             "cambiosEstado": [x.estado.nombreEstado for x in self.cambiosEstado.all()],
         }
+
 
 class Sesion(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)

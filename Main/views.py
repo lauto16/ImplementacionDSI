@@ -130,11 +130,13 @@ class InterfazResultRevManual(View):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.gestor = GestorResultRevManual(interfaz=self)
+        self.evento1 = EventoSismico.objects.get(id=1)
+        self.evento2 = EventoSismico.objects.get(id=2)
+        self.sismografo1 = Sismografo.objects.get(id=1)
+        self.sismografo2 = Sismografo.objects.get(id=2)
 
     def get(self, request: HttpRequest) -> HttpResponse:
         action = request.GET.get("action")
-
-        
 
         if action == 'tomar_sel_evento_sismico':
             id_evento = request.GET.get("id_evento")
@@ -146,15 +148,8 @@ class InterfazResultRevManual(View):
             self.gestor.tomarSelEventoSis(id_evento=id_evento)
 
         if action == "get_eventos_sismicos":
-
-            evento1 = EventoSismico.objects.get(id=1)
-            evento2 = EventoSismico.objects.get(id=2)
-
-            sismografo1 = Sismografo.objects.get(id=1)
-            sismografo2 = Sismografo.objects.get(id=2)
-
             # mostrarEventosSismicos()
-            return JsonResponse([evento1.as_dict(), evento2.as_dict()], safe=False)
+            return JsonResponse([self.evento1.as_dict(), self.evento2.as_dict()], safe=False)
 
         return render(request, "reg_revision.html")
 
