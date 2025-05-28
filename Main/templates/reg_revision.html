@@ -9,6 +9,20 @@
     <link rel="stylesheet" href="{% static 'css/reg_revision.css' %}">
 </head>
 <body>
+    <div id="confirmacionModal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered" style="max-width: 500px;"> 
+          <div class="modal-content" style="background-color: #1c1c1c; color: #f0f0f0; border-radius: 8px; border: 1px solid #444;">
+            <div class="modal-header border-0">
+              <h5 class="modal-title">¿Quieres guardar los datos modificados?</h5>
+              <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="cerrarModal()"></button>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+              <button id="btnSi" type="button" class="btn btn-primary btn-md" style="min-width: 120px; margin: 0 10px;">Sí</button>
+              <button id="btnNo" type="button" class="btn btn-danger btn-md" style="min-width: 120px; margin: 0 10px;">No</button>
+            </div>
+          </div>
+        </div>
+      </div>
     <div class="container py-5">
         <h2 class="mb-4">Registrar resultado de revisión manual</h2>
 
@@ -20,67 +34,55 @@
                 </select>
             </div>
 
-            <fieldset id="sismo-container" disabled class="border p-3 mb-3">
+            <fieldset id="sismo-container" class="border p-3 mb-3">
                 <legend class="float-none w-auto px-2">Datos del evento sísmico</legend>
                 <div class="mb-2">
                     <label for="fecha" class="form-label">Fecha</label>
-                    <input type="date" class="form-control" id="fecha">
+                    <input type="date" disabled class="form-control" id="fecha">
                 </div>
                 <div class="mb-2">
                     <label for="hora" class="form-label">Hora</label>
-                    <input type="time" class="form-control" id="hora">
+                    <input type="time" disabled class="form-control" id="hora">
                 </div>
                 <div class="mb-2">
                     <label for="magnitudVista" class="form-label">Magnitud</label>
-                    <input type="number" step="0.1" class="form-control" id="magnitudVista">
+                    <input type="number" disabled step="0.1" class="form-control" id="magnitudVista">
                 </div>
                 <div class="mb-2">
                     <label for="alcanceVista" class="form-label">Alcance</label>
-                    <input type="text" class="form-control" id="alcanceVista">
+                    <input type="text" disabled class="form-control" id="alcanceVista">
                 </div>
                 <div class="mb-2">
                     <label for="origenVista" class="form-label">Origen de generación</label>
-                    <input type="text" class="form-control" id="origenVista">
+                    <input type="text" disabled class="form-control" id="origenVista">
                 </div>
                 <div class="mb-2">
                     <label for="coordenadas" class="form-label">Coordenadas geográficas</label>
-                    <input type="text" class="form-control" id="coordenadas">
+                    <input type="text" disabled class="form-control" id="coordenadas">
                 </div>
 
                 <div class="mb-2">
                     <label for="clasificacion" class="form-label">Nombre de clasificacion</label>
-                    <input type="text" class="form-control" id="clasificacion">
+                    <input type="text" disabled class="form-control" id="clasificacion">
                 </div>
 
                 <div class="mb-2">
                     <label for="kmProfundidadDesde" class="form-label">Km profundidad desde</label>
-                    <input type="text" class="form-control" id="kmProfundidadDesde">
+                    <input type="text" disabled class="form-control" id="kmProfundidadDesde">
                 </div>
 
                 <div class="mb-2">
                     <label for="kmProfundidadHasta" class="form-label">Km profundidad hasta</label>
-                    <input type="text" class="form-control" id="kmProfundidadHasta">
+                    <input type="text" disabled class="form-control" id="kmProfundidadHasta">
                 </div>
                 <div class="mb-2">
                     <label for="nombreEstacion" class="form-label">Nombre estación sismológica</label>
-                    <input type="text" class="form-control" id="nombreEstacion">
+                    <input type="text" disabled class="form-control" id="nombreEstacion">
                 </div>
 
                 <div id="containerSeries"></div>
                 
             </fieldset>
-
-            <div class="mb-3">
-                <label class="form-label">¿Desea modificar los datos del evento?</label><br>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="modificarDatos" id="modificarSi" value="si" onclick="toggleCamposModificables()">
-                    <label class="form-check-label" for="modificarSi">Sí</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" name="modificarDatos" id="modificarNo" value="no" checked onclick="toggleCamposModificables()">
-                    <label class="form-check-label" for="modificarNo">No</label>
-                </div>
-            </div>
 
             <div id="camposModificables" style="display: none;">
                 <div class="mb-3">
@@ -107,10 +109,12 @@
                 </select>
             </div>
 
-            <button type="submit" class="btn btn-primary">Registrar resultado</button>
-            <button type="reset" class="btn btn-secondary">Cancelar</button>
+            <button id="tomarModificacionDatos" type="submit" class="btn btn-primary">Registrar modificacion de datos</button>
+            <button type="reset" class="btn btn-danger">Cancelar</button>
         </form>
+        <button type="" disabled id="visualizarMapa" class="mt-3 btn btn-secondary">Visualizar el mapa del sismo</button>
     </div>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
     <script src="{% static 'js/reg_revision.js' %}"></script>
 </body>
 </html>

@@ -17,6 +17,7 @@
 )"""
 
 # IMPORTS DE MODELOS
+import json
 from Main.models import (
     TipoDeDato,
     Empleado,
@@ -46,7 +47,7 @@ from django.utils import timezone
 class GestorResultRevManual:
 
     def __init__(self, interfaz) -> None:
-        self.eventos = list(EventoSismico.objects.all())
+        self.eventos = self.getEventos()
         self.eventosAutodetectados = []
         self.estados = list(Estado.objects.all())
         self.eventoSisActual = None
@@ -58,6 +59,29 @@ class GestorResultRevManual:
         self.clasificacionEventoSis = None
         self.origenGeneracionEventoSis = None
         self.ordenadoPorES = None
+        self.estado_Rechazado = None
+        self.empleado = None
+        self.sesion = Sesion.objects.get(id=1)
+
+    def getEventos(self):
+        return list(EventoSismico.objects.all())
+    
+    def getEventoPorId(self, id: int):
+        return EventoSismico.objects.get(id=id)
+
+    def separarTexto(self, texto: str) -> tuple[str, str]:
+        partes = texto.split('-', 1)
+        nombre = partes[0].strip()
+        descripcion = partes[1].strip()
+        return nombre, descripcion
+
+    def validarDatosSismicos(self, texto: str) -> bool:
+        if "-" not in texto:
+            return False
+        partes = texto.split("-", 1)
+        nombre = partes[0].strip()
+        descripcion = partes[1].strip()
+        return bool(nombre) and bool(descripcion)
 
     def getFechaHoraActual(self) -> datetime:
         return timezone.now()
@@ -79,23 +103,26 @@ class GestorResultRevManual:
         datosSeriesTemporales = self.buscarSerieTemporal()
         self.ordenarPorEstacion(datosSeriesTemporales=datosSeriesTemporales)
 
-        print(f'ORDENADO POR ES: {self.ordenadoPorES}')
-
         datos_entrega = []
         for i in range(len(self.ordenadoPorES)):
             datosSerieTemporal = {
-                'nombreEstacion': self.ordenadoPorES[i]["estacionSismologica"].nombre,
-                'muestra': self.ordenadoPorES[i]["datosMuestras"],
+                "nombreEstacion": self.ordenadoPorES[i]["estacionSismologica"].nombre,
+                "muestra": self.ordenadoPorES[i]["datosMuestras"],
             }
             datos_entrega.append(datosSerieTemporal)
-        self.llamarCUGenerarSismograma()
-        self.mostrarVisualizarMapaYDatos()
-        return datos_entrega, datosEvenSis
+        self.sismograma = self.llamarCUGenerarSismograma()
+
+        diccionario_retorno = self.mostrarVisualizarMapaYDatos(
+            datos_entrega, datosEvenSis, self.sismograma
+        )
+        return diccionario_retorno
 
     def getEventoAutodetectado(self, id: int):
-        for evento in self.eventosAutodetectados:
+        for evento in self.eventos:
             if id == evento.id:
-                return evento
+                if evento.estadoActual.esAutodetectado():
+                    print(evento.estadoActual.esAutodetectado)
+                    return evento
 
     def bloquearEventoSis(self) -> None:
         self.eventoSisActual.bloquear(
@@ -103,8 +130,7 @@ class GestorResultRevManual:
         )
 
     def ordenarEventosSisPorFyH(self) -> None:
-        self.eventosAutodetectados.sort(
-            key=lambda evento: evento.fechaHoraOcurrencia)
+        self.eventosAutodetectados.sort(key=lambda evento: evento.fechaHoraOcurrencia)
 
     def buscarEstadoBloqueadoEnRevision(self) -> Estado:
         for estado in self.estados:
@@ -136,9 +162,53 @@ class GestorResultRevManual:
 
     def llamarCUGenerarSismograma(self):
         return "Se llamó al CU generar Sismograma"
+    
+    def buscarEstadoRechazado(self) -> Estado:
+        print('ESTADOS: ', self.estados)
+        for estado in self.estados:
+            if estado.esAmbitoEventoSis():
+                if estado.esRechazado():
+                    return estado
 
-    def mostrarVisualizarMapaYDatos(self):
-        pass
+    def tomarOpcionAccion(self, accion, evento_id):
+        if accion == "rechazar":
+            self.eventoSisActual = self.getEventoPorId(id=evento_id)
+            self.fechaHoraActual = self.getFechaHoraActual()
+            self.estado_Rechazado = self.buscarEstadoRechazado()
+            self.eventoSisActual.rechazar(
+                fecha_actual=self.fechaHoraActual, estado=self.estado_Rechazado)
+            self.empleado = self.sesion.buscarUsuarioLogueado()
+
+            self.crearCambioEstado(empleado=self.empleado, fecha_actual=self.fechaHoraActual, estado=self.estado_Rechazado)
+            self.finCU()
+            print(self.eventoSisActual.as_dict())
+        elif accion == '':
+            # caso alternativo
+            pass
+    
+    def crearCambioEstado(self, fecha_actual, estado, empleado: Empleado)-> None:
+        self.eventoSisActual.crearCambioEstado(fecha_actual=fecha_actual, estado=estado, empleado=empleado)
+    
+    def finCU(self):
+        return "FIN CU"
+
+    def mostrarVisualizarMapaYDatos(
+        self, datos_entrega, datosEvenSis, sismograma
+    ) -> dict:
+        return {
+            "datos_entrega": datos_entrega,
+            "datosEvenSis": datosEvenSis,
+            "sismograma": sismograma,
+        }
+
+    def ofrecerModificarEvento(self):
+        return True
+
+    def tomarConfirmacionVisualizacion(self, respuesta: str):
+        response = self.ofrecerModificarEvento()
+        if response:
+            return True
+        return False
 
 
 def opciones_sismografo(request: HttpRequest) -> HttpResponse:
@@ -167,20 +237,116 @@ class InterfazResultRevManual(View):
 
         if action == "tomar_sel_evento_sismico":
             id_evento = request.GET.get("id_evento")
-            serieTemporal, datosSis = self.gestor.tomarSelEventoSis(
+            diccionario_retorno = self.gestor.tomarSelEventoSis(
                 id_evento=int(id_evento)
             )
-            res = {"serieTemp": serieTemporal, "datosEvenSis": datosSis}
-            print(res)
+            res = {
+                "serieTemp": diccionario_retorno["datos_entrega"],
+                "datosEvenSis": diccionario_retorno["datosEvenSis"],
+                "sismograma": diccionario_retorno["sismograma"],
+            }
+            # solicitarConfirmacionVisualizacion() (se ejecuta en el frontend)
             return JsonResponse(res, safe=False)
 
         if action == "get_eventos_sismicos":
             # mostrarEventosSismicos()
-            evento1 = EventoSismico.objects.get(id=1)
-            evento2 = EventoSismico.objects.get(id=2)
-            return JsonResponse([evento1.as_dict(), evento2.as_dict()], safe=False)
+            evento1 = self.gestor.getEventoAutodetectado(id=1) 
+            evento2 = self.gestor.getEventoAutodetectado(id=2)
+            eventos = [evento1, evento2]
+
+            return JsonResponse([x.as_dict() for x in eventos if x is not None], safe=False)
+
+        if action == "tomar_confirmacion_visualizacion":
+            respuesta = request.GET.get("respuesta")
+            respuesta_confirmacion = self.gestor.tomarConfirmacionVisualizacion(
+                respuesta=respuesta
+            )
+            if respuesta_confirmacion:
+                # ofrecerModificarEvento() (se ejecuta en el frontend)
+                return JsonResponse(
+                    {"success": True, "action": "ofrecerModificarEvento"}
+                )
 
         return render(request, "reg_revision.html")
 
     def post(self, request: HttpRequest) -> HttpResponse:
-        return JsonResponse({"error": "Método no permitido"}, status=405)
+        # tomarModificacionDatos
+        try:
+            data = json.loads(request.body)
+            id_evento = data.get("id_evento")
+            action = data.get("action")
+            action_to_do = data.get('actionToDo')
+
+            if action_to_do is None:
+                return JsonResponse({'success': False, 'error': 'Seleccione una accion para hacer'})
+
+            if action == 'save':
+
+                alcance = data.get("alcance")
+                origen = data.get("origen")
+                magnitud = data.get("magnitud")
+
+                if not self.gestor.validarDatosSismicos(texto=alcance):
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": "El alcance debe separar por un guion el nombre y la descripción",
+                        }
+                    )
+
+                if not self.gestor.validarDatosSismicos(texto=origen):
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": "El origen debe separar por un guion el nombre y la descripción",
+                        }
+                    )
+                
+                nombre_alcance, descripcion_alcance = self.gestor.separarTexto(alcance)
+                nombre_origen, descripcion_origen = self.gestor.separarTexto(origen)
+
+                if not isinstance(magnitud, float):
+                    try:
+                        magnitud = float(magnitud)
+                    except:
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "error": "La magnitud debe ser un número decimal",
+                            }
+                    )
+
+                # curso alternativo: El analista de sismos modifica los datos del evento sismico
+                evento_modificado = None
+                try:
+                    evento_modificado = EventoSismico.objects.get(id=id_evento)
+                except EventoSismico.DoesNotExist:
+                    return JsonResponse(
+                        {"success": False, "message": "El evento sismico no existe"}
+                    )
+                
+                evento_modificado.magnitud.numero = magnitud
+                evento_modificado.magnitud.save()
+
+                evento_modificado.alcanceSismo.nombre = nombre_alcance
+                evento_modificado.alcanceSismo.descripcion = descripcion_alcance
+                evento_modificado.alcanceSismo.save()
+
+                evento_modificado.origenGeneracion.nombre = nombre_origen
+                evento_modificado.origenGeneracion.descripcion = descripcion_origen
+                evento_modificado.origenGeneracion.save()
+
+                evento_modificado.save()
+
+            elif action == 'dontSave':
+                pass
+
+            self.gestor.tomarOpcionAccion(accion=action_to_do, evento_id=id_evento)
+
+            return JsonResponse({'success': True, 'message': 'Se aplico la accion seleccionada', 'accion_realizada': action_to_do, 'se_guardo': action})
+                
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"success": False, "message": "Error al decodificar el JSON"},
+                status=400,
+            )
