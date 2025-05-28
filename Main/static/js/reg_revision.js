@@ -1,4 +1,45 @@
-let eventosSismicos = [];
+function rellenarDatosAdicionales(data){
+  
+  document.getElementById('clasificacion').value = data.datosEvenSis.clasificacionEventoSis.nombre;
+  document.getElementById('kmProfundidadDesde').value = data.datosEvenSis.clasificacionEventoSis.kmProfundidadDesde;
+  document.getElementById('kmProfundidadHasta').value = data.datosEvenSis.clasificacionEventoSis.kmProfundidadHasta;
+
+  document.getElementById('origenVista').value = `${data.datosEvenSis.origenGeneracionEventoSis.nombre} - ${data.datosEvenSis.origenGeneracionEventoSis.descripcion}`;
+  document.getElementById('alcanceVista').value = `${data.datosEvenSis.alcanceEventoSis.nombre} - ${data.datosEvenSis.alcanceEventoSis.descripcion}`;
+
+  let serieTemporal = data.serieTemp;
+
+  document.getElementById('nombreEstacion').value = serieTemporal[0].nombreEstacion;
+  
+  const sismo_container = document.getElementById('containerSeries');
+  sismo_container.innerHTML = '';
+
+  for (let j = 0; j < serieTemporal.length; j++) {
+    const serie = serieTemporal[j];
+    let muestras = serie.muestra;
+
+    let y = document.createElement('div');
+    y.innerHTML = `<div class="mb-2">
+      <h4>Serie temporal ${j+1} - ${serie.nombreEstacion}</h4>
+    </div>`;
+
+    for (let index = 0; index < muestras.length; index++) {
+      const muestra = muestras[index];
+
+      const x = document.createElement('div');
+      x.innerHTML = `
+        <div class="mb-2">
+          <label class="form-label">${muestra.tipoDeDato.denominacion}</label>
+          <input type="text" class="form-control" value="${muestra.valor} ${muestra.tipoDeDato.nombreUnidadMedida}">
+        </div>
+      `;
+
+      y.appendChild(x);
+    }
+
+    sismo_container.appendChild(y);
+  }
+}
 
 
 function tomarSelEventoSis(idSeleccionado) {
@@ -16,8 +57,10 @@ function tomarSelEventoSis(idSeleccionado) {
       if (!response.ok) throw new Error('Error en la solicitud');
       return response.json();
     })
-    .then(data => {
-      console.log(data)
+    .then(data => {      
+      console.log(data);
+      
+      rellenarDatosAdicionales(data)
     })
     .catch(error => {
       console.error(error);
@@ -95,8 +138,7 @@ function eventoSeleccionadoChange() {
     }
 
     document.getElementById('magnitudVista').value = evento.magnitud || "";
-    document.getElementById('alcanceVista').value = `${evento.alcanceSismo.nombre} - ${evento.alcanceSismo.descripcion}` || "";
-    document.getElementById('origenVista').value = `${evento.origenGeneracion.nombre} - ${evento.origenGeneracion.descripcion}` || "";
+
 
     if (evento.latitudEpicentro != null && evento.longitudEpicentro != null) {
       document.getElementById('coordenadas').value = `${evento.latitudEpicentro}, ${evento.longitudEpicentro}`;

@@ -33,7 +33,7 @@ from Main.models import (
     DetalleMuestraSismica,
     SerieTemporal,
     Sismografo,
-    EventoSismico
+    EventoSismico,
 )
 
 from django.http import HttpResponse, HttpRequest, JsonResponse
@@ -73,15 +73,23 @@ class GestorResultRevManual:
         # se hace al final -> self.mostrarDatosEventoSis()
         self.buscarSerieTemporal()
 
+        print(f'ORDENADO POR ES: {self.ordenadoPorES}')
+
         datosEvenSis = {
             "alcanceEventoSis": self.alcanceEventoSis,
             "clasificacionEventoSis": self.clasificacionEventoSis,
-            "origenGeneracionEventoSis": self.origenGeneracionEventoSis
-        }
-        datosSerieTemporal = [self.ordenadoPorES[0]
-                              ["estacionSismologica"].nombre, datosEvenSis]
+            "origenGeneracionEventoSis": self.origenGeneracionEventoSis,
+        }  
+        datos_entrega = []
+        for i in range(len(self.ordenadoPorES)):
+            datosSerieTemporal = {
+                'nombreEstacion': self.ordenadoPorES[i]["estacionSismologica"].nombre,
+                'muestra': self.ordenadoPorES[i]["datosMuestras"],
+            }
+            datos_entrega.append(datosSerieTemporal)
 
-        return datosSerieTemporal, datosEvenSis
+
+        return datos_entrega, datosEvenSis
 
     def getEventoAutodetectado(self, id: int):
         for evento in self.eventosAutodetectados:
@@ -90,11 +98,11 @@ class GestorResultRevManual:
 
     def bloquearEventoSis(self) -> None:
         self.eventoSisActual.bloquear(
-            fecha_actual=self.fechaHoraActual, estado=self.estado_BloqueadoEnRevision)
+            fecha_actual=self.fechaHoraActual, estado=self.estado_BloqueadoEnRevision
+        )
 
     def ordenarEventosSisPorFyH(self) -> None:
-        self.eventosAutodetectados.sort(
-            key=lambda evento: evento.fechaHoraOcurrencia)
+        self.eventosAutodetectados.sort(key=lambda evento: evento.fechaHoraOcurrencia)
 
     def buscarEstadoBloqueadoEnRevision(self) -> Estado:
         for estado in self.estados:
@@ -116,14 +124,16 @@ class GestorResultRevManual:
 
     def buscarSerieTemporal(self):
         datosSeriesTemporales = self.eventoSisActual.buscarSerieTemporal(
-            sismografos=self.sismografos)
-        # cambios
+            sismografos=self.sismografos
+        )
         self.ordenarPorEstacion(datosSeriesTemporales=datosSeriesTemporales)
 
     def ordenarPorEstacion(self, datosSeriesTemporales: list) -> None:
         # Ordenar ES por nombre de A-Z
-        self.ordenadoPorES = (sorted(
-            datosSeriesTemporales, key=lambda dato: dato["estacionSismologica"].nombre.lower()))
+        self.ordenadoPorES = sorted(
+            datosSeriesTemporales,
+            key=lambda dato: dato["estacionSismologica"].nombre.lower(),
+        )
 
 
 def opciones_sismografo(request: HttpRequest) -> HttpResponse:
@@ -138,7 +148,7 @@ def opciones_sismografo(request: HttpRequest) -> HttpResponse:
         ó respuesta en HTTP enviada al usuario desde el backend (en caso de pedir el html)
     """
 
-    return render(request, 'opciones.html')
+    return render(request, "opciones.html")
 
 
 class InterfazResultRevManual(View):
@@ -150,16 +160,14 @@ class InterfazResultRevManual(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         action = request.GET.get("action")
 
-        if action == 'tomar_sel_evento_sismico':
+        if action == "tomar_sel_evento_sismico":
             id_evento = request.GET.get("id_evento")
             serieTemporal, datosSis = self.gestor.tomarSelEventoSis(
-                id_evento=int(id_evento))
-            res = {
-                "serieTemp": serieTemporal,
-                "datosEvenSis": datosSis
-            }
+                id_evento=int(id_evento)
+            )
+            res = {"serieTemp": serieTemporal, "datosEvenSis": datosSis}
             print(res)
-            return JsonResponse(res)
+            return JsonResponse(res, safe=False)
 
         if action == "get_eventos_sismicos":
             # mostrarEventosSismicos()
@@ -171,18 +179,3 @@ class InterfazResultRevManual(View):
 
     def post(self, request: HttpRequest) -> HttpResponse:
         return JsonResponse({"error": "Método no permitido"}, status=405)
-
-    def mostrarEvSis(self, datos):
-        # TODO MOSTRAR EN EL FRONT
-        aux = ""
-
-        datos = {'EST_SISMOLOGICA': datos[0]["estacionSismologica"],
-                 'MUESTRAS_SISMOLOGICAS': datos[0]["datosMuestras"]}
-
-        aux += "Estacion Sis: {datos['EST_SISMOLOGICA'].nombre}, "
-
-        for detalle in datos['MUESTRAS_SISMOLOGICAS']:
-            aux += "valor: " + str(detalle.valor) + " "
-            aux += "Tipo de dato: " + detalle.tipoDeDato.denominacion
-
-        return JsonResponse({"Success": True})

@@ -20,7 +20,7 @@
                 </select>
             </div>
 
-            <fieldset disabled class="border p-3 mb-3">
+            <fieldset id="sismo-container" disabled class="border p-3 mb-3">
                 <legend class="float-none w-auto px-2">Datos del evento sísmico</legend>
                 <div class="mb-2">
                     <label for="fecha" class="form-label">Fecha</label>
@@ -46,6 +46,28 @@
                     <label for="coordenadas" class="form-label">Coordenadas geográficas</label>
                     <input type="text" class="form-control" id="coordenadas">
                 </div>
+
+                <div class="mb-2">
+                    <label for="clasificacion" class="form-label">Nombre de clasificacion</label>
+                    <input type="text" class="form-control" id="clasificacion">
+                </div>
+
+                <div class="mb-2">
+                    <label for="kmProfundidadDesde" class="form-label">Km profundidad desde</label>
+                    <input type="text" class="form-control" id="kmProfundidadDesde">
+                </div>
+
+                <div class="mb-2">
+                    <label for="kmProfundidadHasta" class="form-label">Km profundidad hasta</label>
+                    <input type="text" class="form-control" id="kmProfundidadHasta">
+                </div>
+                <div class="mb-2">
+                    <label for="nombreEstacion" class="form-label">Nombre estación sismológica</label>
+                    <input type="text" class="form-control" id="nombreEstacion">
+                </div>
+
+                <div id="containerSeries"></div>
+                
             </fieldset>
 
             <div class="mb-3">
