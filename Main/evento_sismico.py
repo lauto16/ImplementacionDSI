@@ -86,8 +86,10 @@ class MuestraSismica:
         self.detallesMuestraSismica.append(new_detalle)
 
     def getDatos(self) -> None:
+        datos = []
         for detalleMS in self.detallesMuestraSismica:
-            detalleMS.getDatos()
+            datos.append(detalleMS.getDatos())
+        return datos
 
 
 class SerieTemporal:
@@ -107,37 +109,37 @@ class SerieTemporal:
         self.estado = estado
         self.muestrasSismica = muestrasSismica
 
-    def getDatos(self) -> dict:
+    """def getDatos(self) -> dict:
         return {
             "condicionAlarma": self.condicionAlarma,
             "fechaHoraInicioRegistroMuestras": self.fechaHoraInicioRegistroMuestras,
             "fechaHoraRegistros": self.fechaHoraRegistros,
             "frecuenciaMuestreo": self.frecuenciaMuestreo,
             "estado": self.estado.nombreEstado,
-            # 'muestrasSismica': self.muestrasSismica,
-        }
+        }"""
 
     def getDatosMuestra(self, sismografos):
+        # TODO: ver que tipos de datos usar
         resultadoDatos = []
         for muestraSismica in self.muestrasSismica:
             # Le pasa la responsabilidad de iterar a muestra sismica (bucle anidado)
-            muestraSismica.getDatos()
+            lista_de_datos = muestraSismica.getDatos()
             if muestraSismica:
-                resultadoDatos.append(muestraSismica)
+                resultadoDatos.append(lista_de_datos)
 
         # TODO retornar datos y ES
         # Itera los sismografos que llegan por parametro
-        sismografoRetorno = None
+        sismografoRetorno = self.obtenerES(sismografos)
+        resultado = [sismografoRetorno, resultadoDatos]
+        return resultado
+
+    def obtenerSismografo(self, sismografos):
         for sismografo in sismografos:
             sisActual = sismografo.obtenerSismografo(self)
             if sisActual:
-                sismografoSeleccionado = sisActual
                 break
-        if sismografoSeleccionado:
-            sismografoRetorno = sismografoSeleccionado.obtenerES()
-
-        resultado = [sismografoRetorno, resultadoDatos]
-        return resultado
+        if sisActual:
+            return sisActual.obtenerES()
 
 
 class Empleado:
@@ -328,4 +330,5 @@ class EventoSismico:
 
     def buscarSerieTemporal(self, sismografos) -> None:
         for serieTemporal in self.seriesTemporales:
-            serieTemporal.getDatosMuestra(sismografos)
+            resultado = serieTemporal.getDatosMuestra(sismografos)
+            print(resultado)
