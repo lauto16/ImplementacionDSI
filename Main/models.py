@@ -63,6 +63,13 @@ class TipoDeDato(models.Model):
     nombreUnidadMedida = models.CharField(max_length=100)
     valorUmbral = models.FloatField()
 
+    def as_dict(self) -> dict:
+        return {
+            "denominacion": self.denominacion,
+            "nombreUnidadMedida": self.nombreUnidadMedida,
+            "valorUmbral": self.valorUmbral,
+        }
+
 
 class EstacionSismologica(models.Model):
     codigoEstacion = models.CharField(max_length=100)
@@ -110,8 +117,10 @@ class DetalleMuestraSismica(models.Model):
     tipoDeDato = models.ForeignKey(TipoDeDato, on_delete=models.CASCADE)
 
     def getDatos(self) -> dict:
-        # TODO preguntar y revisar si LONGITUD, FREC Y VEL-ONDA son instancias de TIPODEDATO
-        return {"valor": self.valor, "tipo_de_dato": self.tipoDeDato.denominacion}
+        return {
+            "valor": self.valor,
+            "tipoDeDato": self.tipoDeDato.as_dict() if hasattr(self.tipoDeDato, "as_dict") else self.tipoDeDato_id
+        }
 
 
 class MuestraSismica(models.Model):
@@ -119,28 +128,43 @@ class MuestraSismica(models.Model):
     detalleMuestraSismica = models.ManyToManyField(DetalleMuestraSismica)
 
     def getDatos(self) -> list:
-        datos = []
+        """devuelve una lista con sus detalles"""
+        resultado = []
         for detalle in self.detalleMuestraSismica.all():
-            datos.append(detalle.getDatos())
-        return datos
+            resultado.append(detalle.getDatos())
+        return resultado
 
 
 class SerieTemporal(models.Model):
     condicionAlarma = models.CharField(max_length=200)
-    fechaHoraInicioRegistroMuestras = models.DateTimeField(null=True, blank=True)
+    fechaHoraInicioRegistroMuestras = models.DateTimeField(
+        null=True, blank=True)
     fechaHoraRegistros = models.DateTimeField(null=True, blank=True)
     frecuenciaMuestreo = models.FloatField()
     estado = models.ForeignKey(Estado, on_delete=models.CASCADE)
     muestraSismica = models.ManyToManyField(MuestraSismica)
 
-    def obtenerES(self, sismografos: list):
-        pass
-
-    def getDatosMuestra(self, sismografos: list) -> list:
-        datos_muestras = []
+    def getDatosMuestra(self, sismografos: list) -> dict:
+        # quizas vaya en el gestor
+        # En este momento estamos trabajando con un evento sismico, si queremos debbuggear
+        # habra que asignar varias ST al eventoSis Actual
+        datosMuestras = []
         for muestra in self.muestraSismica.all():
-            datos_muestras.append(muestra.getDatos())
-        return datos_muestras
+            datosMuestras = muestra.getDatos()
+        ES = self.obtenerES(sismografos)
+        datosMuestreo = {
+            "estacionSismologica": ES,
+            "datosMuestras": datosMuestras
+        }
+        return datosMuestreo
+
+    def obtenerES(self, sismografos: list):
+        for sismografo in sismografos:
+            for serie in sismografo.serieTemporal.all():
+                if serie.fechaHoraRegistros == self.fechaHoraRegistros:
+                    ES = sismografo.estacionSismologica
+                    return ES
+        return
 
 
 class Sismografo(models.Model):
@@ -161,12 +185,14 @@ class EventoSismico(models.Model):
     latitudHipocentro = models.FloatField()
     longitudHipocentro = models.FloatField()
     magnitud = models.ForeignKey(MagnitudRichter, on_delete=models.CASCADE)
-    origenGeneracion = models.ForeignKey(OrigenDeGeneracion, on_delete=models.CASCADE)
+    origenGeneracion = models.ForeignKey(
+        OrigenDeGeneracion, on_delete=models.CASCADE)
     alcanceSismo = models.ForeignKey(AlcanceSismo, on_delete=models.CASCADE)
     estadoActual = models.ForeignKey(
         Estado, on_delete=models.CASCADE, related_name="eventos_actuales"
     )
-    clasificacion = models.ForeignKey(ClasificacionSismo, on_delete=models.CASCADE)
+    clasificacion = models.ForeignKey(
+        ClasificacionSismo, on_delete=models.CASCADE)
     cambiosEstado = models.ManyToManyField(CambioEstado)
     serieTemporal = models.ManyToManyField(SerieTemporal)
 
@@ -186,20 +212,25 @@ class EventoSismico(models.Model):
         return "\n".join(
             [
                 color("=== Evento Sísmico ===", "1;34"),
-                color(f"Fecha/Hora de Ocurrencia: {self.fechaHoraOcurrencia}", "1;32"),
+                color(
+                    f"Fecha/Hora de Ocurrencia: {self.fechaHoraOcurrencia}", "1;32"),
                 color(f"Fecha/Hora de Fin: {self.fechaHoraFin}", "1;32"),
                 color(f"Latitud Epicentro: {self.latitudEpicentro}", "1;36"),
                 color(f"Longitud Epicentro: {self.longitudEpicentro}", "1;36"),
                 color(f"Latitud Hipocentro: {self.latitudHipocentro}", "1;36"),
-                color(f"Longitud Hipocentro: {self.longitudHipocentro}", "1;36"),
+                color(
+                    f"Longitud Hipocentro: {self.longitudHipocentro}", "1;36"),
                 color(f"Magnitud: {dict_from_obj(self.magnitud)}", "1;35"),
                 color(
                     f"Origen de Generación: {dict_from_obj(self.origenGeneracion)}",
                     "1;35",
                 ),
-                color(f"Alcance del Sismo: {dict_from_obj(self.alcanceSismo)}", "1;35"),
-                color(f"Estado Actual: {dict_from_obj(self.estadoActual)}", "1;33"),
-                color(f"Clasificación: {dict_from_obj(self.clasificacion)}", "1;33"),
+                color(
+                    f"Alcance del Sismo: {dict_from_obj(self.alcanceSismo)}", "1;35"),
+                color(
+                    f"Estado Actual: {dict_from_obj(self.estadoActual)}", "1;33"),
+                color(
+                    f"Clasificación: {dict_from_obj(self.clasificacion)}", "1;33"),
                 color(
                     f"Cantidad de Cambios de Estado: {self.cambiosEstado.count()}",
                     "1;31",
@@ -229,7 +260,8 @@ class EventoSismico(models.Model):
             "latitudHipocentro": self.latitudHipocentro,
             "longitudHipocentro": self.longitudHipocentro,
             "magnitud": (
-                self.magnitud.numero if hasattr(self.magnitud, "numero") else 10
+                self.magnitud.numero if hasattr(
+                    self.magnitud, "numero") else 10
             ),
             "origenGeneracion": (
                 self.origenGeneracion.getDatos()
@@ -263,14 +295,18 @@ class EventoSismico(models.Model):
         for cambio_estado in self.cambiosEstado.all():
             if cambio_estado.esActual():
                 cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
-                self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado)
+                self.crearCambioEstado(
+                    fecha_actual=fecha_actual, estado=estado)
 
     def buscarSerieTemporal(self, sismografos: list):
+        # Cambios
+        resultado = []
         for serieTemporal in self.serieTemporal.all():
-            resultado = serieTemporal.getDatosMuestra(sismografos)
-            print(f"RESULTADOS DE LA BUSQUEDA DE SERIES TEMPORALES: {resultado}")
+            resultado.append(serieTemporal.getDatosMuestra(sismografos))
+        return resultado
 
 
 class Sesion(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    fechaInicio = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    fechaInicio = models.DateTimeField(
+        auto_now_add=True, null=True, blank=True)

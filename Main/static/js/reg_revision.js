@@ -1,7 +1,7 @@
 let eventosSismicos = [];
 
 
-function tomarSelEventoSis(idSeleccionado){
+function tomarSelEventoSis(idSeleccionado) {
   const url = new URL(window.location.href);
   url.searchParams.set('action', 'tomar_sel_evento_sismico');
   url.searchParams.set('id_evento', idSeleccionado)
@@ -12,16 +12,16 @@ function tomarSelEventoSis(idSeleccionado){
       'Content-Type': 'application/json'
     }
   })
-  .then(response => {
-    if (!response.ok) throw new Error('Error en la solicitud');
-    return response.json();
-  })
-  .then(data => {
-    //
-  })
-  .catch(error => {
-    console.error(error);
-  });
+    .then(response => {
+      if (!response.ok) throw new Error('Error en la solicitud');
+      return response.json();
+    })
+    .then(data => {
+      console.log(data)
+    })
+    .catch(error => {
+      console.error(error);
+    });
 }
 
 
@@ -35,26 +35,26 @@ function getEventosSismicos() {
       'Content-Type': 'application/json'
     }
   })
-  .then(response => {
-    if (!response.ok) throw new Error('Error en la solicitud');
-    return response.json();
-  })
-  .then(data => {
-    eventosSismicos = data;
+    .then(response => {
+      if (!response.ok) throw new Error('Error en la solicitud');
+      return response.json();
+    })
+    .then(data => {
+      eventosSismicos = data;
 
-    const select = document.getElementById('eventoSelect');
-    select.innerHTML = '<option selected disabled>Seleccione un evento detectado</option>';
+      const select = document.getElementById('eventoSelect');
+      select.innerHTML = '<option selected disabled>Seleccione un evento detectado</option>';
 
-    data.forEach(evento => {
-      const option = document.createElement('option');
-      option.value = evento.id;
-      option.textContent = `${evento.fechaHoraOcurrencia} - ${evento.origenGeneracion.nombre} - ${evento.origenGeneracion.descripcion} - M${evento.magnitud}`;
-      select.appendChild(option);
+      data.forEach(evento => {
+        const option = document.createElement('option');
+        option.value = evento.id;
+        option.textContent = `${evento.fechaHoraOcurrencia} - ${evento.origenGeneracion.nombre} - ${evento.origenGeneracion.descripcion} - M${evento.magnitud}`;
+        select.appendChild(option);
+      });
+    })
+    .catch(error => {
+      console.error('Error al obtener eventos sísmicos:', error);
     });
-  })
-  .catch(error => {
-    console.error('Error al obtener eventos sísmicos:', error);
-  });
 }
 
 function vaciarFormulario() {
@@ -73,7 +73,7 @@ function eventoSeleccionadoChange() {
   const select = document.getElementById('eventoSelect');
   const idSeleccionado = select.value;
   tomarSelEventoSis(idSeleccionado)
-  
+
   vaciarFormulario();
 
   if (!idSeleccionado) {
@@ -83,13 +83,12 @@ function eventoSeleccionadoChange() {
 
   const evento = eventosSismicos.find(e => e.id.toString() === idSeleccionado);
   if (evento) {
-    console.log('Evento seleccionado:', evento);
 
     const fechaHoraOcurrencia = evento.fechaHoraOcurrencia || "";
-    if(fechaHoraOcurrencia.includes(" ")) {
+    if (fechaHoraOcurrencia.includes(" ")) {
       const [fecha, hora] = fechaHoraOcurrencia.split(" ");
       document.getElementById('fecha').value = fecha;
-      document.getElementById('hora').value = hora.substring(0,5);
+      document.getElementById('hora').value = hora.substring(0, 5);
     } else {
       document.getElementById('fecha').value = fechaHoraOcurrencia;
       document.getElementById('hora').value = "";
@@ -105,7 +104,7 @@ function eventoSeleccionadoChange() {
       document.getElementById('coordenadas').value = "";
     }
 
-    
+
 
   } else {
     console.warn('Evento no encontrado para el id:', idSeleccionado);
