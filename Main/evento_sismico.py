@@ -71,9 +71,7 @@ class DetalleMuestraSismica:
         self.valor = valor
         self.tipoDeDato = tipoDeDato
 
-    def getDatos(self) -> dict:
-        # TODO preguntar y revisar si LONGITUD, FREC Y VELONDA son instancias de TIPODEDATO
-        return {"valor": self.valor, "tipo_de_dato": self.tipoDeDato}
+
 
 
 class MuestraSismica:
@@ -85,11 +83,6 @@ class MuestraSismica:
         new_detalle = DetalleMuestraSismica(valor=valor, tipoDeDato=tipo_dato)
         self.detallesMuestraSismica.append(new_detalle)
 
-    def getDatos(self) -> None:
-        datos = []
-        for detalleMS in self.detallesMuestraSismica:
-            datos.append(detalleMS.getDatos())
-        return datos
 
 
 class SerieTemporal:
@@ -172,10 +165,6 @@ class CambioEstado:
         self.estado = estado
         self.responsableInspeccion = responsableInspeccion
 
-    def esActual(self) -> bool:
-        if self.fechaHoraFin == None:
-            return True
-        return False
 
     def setFechaHoraFin(self, fecha_actual: datetime) -> None:
         self.fechaHoraFin = fecha_actual
@@ -273,51 +262,11 @@ class EventoSismico:
             'fechaHoraOcurrencia': self.fechaHoraOcurrencia
         }
 
-    def as_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "fechaHoraFin": (
-                self.fechaHoraFin.strftime("%Y-%m-%d %H:%M:%S")
-                if hasattr(self.fechaHoraFin, "strftime")
-                else self.fechaHoraFin
-            ),
-            "fechaHoraOcurrencia": (
-                self.fechaHoraOcurrencia.strftime("%Y-%m-%d %H:%M:%S")
-                if hasattr(self.fechaHoraOcurrencia, "strftime")
-                else self.fechaHoraOcurrencia
-            ),
-            "latitudEpicentro": self.latitudEpicentro,
-            "longitudEpicentro": self.longitudEpicentro,
-            "latitudHipocentro": self.latitudHipocentro,
-            "longitudHipocentro": self.longitudHipocentro,
-            "magnitud": (
-                self.magnitud.numero
-                if hasattr(self.magnitud, "numero")
-                else self.magnitud
-            ),
-            "origenGeneracion": (
-                self.origenGeneracion.getNombre()
-                if hasattr(self.origenGeneracion, "getNombre")
-                else self.origenGeneracion
-            ),
-            "alcanceSismo": self.alcanceSismo.getNombre(),
-            "estadoActual": self.estadoActual.nombreEstado,
-            "clasificacion": self.clasificacion.getNombre(),
-            "cambiosEstado": [x.estado.nombreEstado for x in self.cambiosEstado],
-        }
-
     def crearCambioEstado(self, fecha_actual: datetime, estado: Estado, empleado: Empleado) -> None:
         # en este momento no se le asigna empleado
         nuevo_estado = CambioEstado(
             fechaHoraInicio=fecha_actual, fechaHoraFin=None, estado=estado, responsableInspeccion=None)
         self.cambiosEstado.append(nuevo_estado)
-
-    def bloquear(self, fecha_actual: datetime, estado: Estado) -> None:
-        for cambio_estado in self.cambiosEstado:
-            if cambio_estado.esActual():
-                cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
-                self.crearCambioEstado(
-                    fecha_actual=fecha_actual, estado=estado)
 
     def getAlcance(self) -> None:
         return self.alcanceSismo.getNombre()
@@ -327,8 +276,3 @@ class EventoSismico:
 
     def getOrigenGeneracion(self) -> None:
         return self.origenGeneracion.getNombre()
-
-    def buscarSerieTemporal(self, sismografos) -> None:
-        for serieTemporal in self.seriesTemporales:
-            resultado = serieTemporal.getDatosMuestra(sismografos)
-            print(resultado)

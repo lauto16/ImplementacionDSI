@@ -40,39 +40,36 @@ from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.views import View
 from django.shortcuts import render
 from datetime import datetime
-
+from django.utils import timezone
 
 class GestorResultRevManual:
 
     def __init__(self, interfaz) -> None:
-        self.eventos = []
+        self.eventos = list(EventoSismico.objects.all())
         self.eventosAutodetectados = []
-        self.estados = []
+        self.estados = list(Estado.objects.all())
         self.eventoSisActual = None
         self.fechaHoraActual = None
         self.estado_BloqueadoEnRevision = None
-        self.sismografos = []
+        self.sismografos = list(Sismografo.objects.all())
         self.interfaz = interfaz
         self.alcanceEventoSis = None
         self.clasificacionEventoSis = None
         self.origenGeneracionEventoSis = None
 
     def getFechaHoraActual(self) -> datetime:
-        return datetime.now()
+        return timezone.now()
 
     def tomarSelEventoSis(self, id_evento: int) -> None:
         # se necesita buscar el evento elegio entre los autodetectados
+        self.eventosAutodetectados = self.buscarEventosAutodetectados()
         self.eventoSisActual = self.getEventoAutodetectado(id=id_evento)
-        self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
         self.fechaHoraActual = self.getFechaHoraActual()
+        self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
         self.bloquearEventoSis()
         self.buscarDatosEventoSis()
-        self.mostrarDatosEventoSis()
-        self.buscarSerieTemporal(self.sismografos)
-
-    def mostrarDatosEventoSis(self):
-        #enviar al final
-        pass
+        # se hace al final -> self.mostrarDatosEventoSis()
+        self.buscarSerieTemporal()
 
     def getEventoAutodetectado(self, id: int):
         for evento in self.eventosAutodetectados:
@@ -91,11 +88,10 @@ class GestorResultRevManual:
         for estado in self.estados:
             if estado.esAmbitoEventoSis():
                 if estado.esBloqueadoEnRevision():
-                    self.bloquearEventoSis()
                     return estado
 
-    def buscarEventosAutodetectados(self, eventos: list) -> list:
-        for evento in eventos:
+    def buscarEventosAutodetectados(self) -> list:
+        for evento in self.eventos:
             if evento.estadoActual.esAutodetectado:
                 self.eventosAutodetectados.append(evento)
         self.ordenarEventosSisPorFyH()
@@ -109,8 +105,8 @@ class GestorResultRevManual:
     def buscarSerieTemporal(self):
         self.eventoSisActual.buscarSerieTemporal(sismografos=self.sismografos)
 
-
 def opciones_sismografo(request: HttpRequest) -> HttpResponse:
+
     """
     Vista para mostrar las opciones del sistema
 
@@ -130,27 +126,20 @@ class InterfazResultRevManual(View):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.gestor = GestorResultRevManual(interfaz=self)
-        self.evento1 = EventoSismico.objects.get(id=1)
-        self.evento2 = EventoSismico.objects.get(id=2)
-        self.sismografo1 = Sismografo.objects.get(id=1)
-        self.sismografo2 = Sismografo.objects.get(id=2)
 
     def get(self, request: HttpRequest) -> HttpResponse:
         action = request.GET.get("action")
 
         if action == 'tomar_sel_evento_sismico':
             id_evento = request.GET.get("id_evento")
-            
-            eventos_autodetectados = self.gestor.buscarEventosAutodetectados(
-                eventos=self.gestor.eventos)
-            self.gestor.eventosAutodetectados = eventos_autodetectados
-            self.gestor.eventosAutodetectados = eventos_autodetectados
-            self.gestor.tomarSelEventoSis(id_evento=id_evento)
+            self.gestor.tomarSelEventoSis(id_evento=int(id_evento))
 
         if action == "get_eventos_sismicos":
             # mostrarEventosSismicos()
-            return JsonResponse([self.evento1.as_dict(), self.evento2.as_dict()], safe=False)
-
+            evento1 = EventoSismico.objects.get(id=1)
+            evento2 = EventoSismico.objects.get(id=2)
+            return JsonResponse([evento1.as_dict(), evento2.as_dict()], safe=False)
+    
         return render(request, "reg_revision.html")
 
     def post(self, request: HttpRequest) -> HttpResponse:

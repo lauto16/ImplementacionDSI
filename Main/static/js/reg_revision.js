@@ -48,7 +48,7 @@ function getEventosSismicos() {
     data.forEach(evento => {
       const option = document.createElement('option');
       option.value = evento.id;
-      option.textContent = `${evento.fechaHoraOcurrencia} - ${evento.origenGeneracion} - M${evento.magnitud}`;
+      option.textContent = `${evento.fechaHoraOcurrencia} - ${evento.origenGeneracion.nombre} - ${evento.origenGeneracion.descripcion} - M${evento.magnitud}`;
       select.appendChild(option);
     });
   })
@@ -96,8 +96,8 @@ function eventoSeleccionadoChange() {
     }
 
     document.getElementById('magnitudVista').value = evento.magnitud || "";
-    document.getElementById('alcanceVista').value = evento.alcanceSismo || "";
-    document.getElementById('origenVista').value = evento.origenGeneracion || "";
+    document.getElementById('alcanceVista').value = `${evento.alcanceSismo.nombre} - ${evento.alcanceSismo.descripcion}` || "";
+    document.getElementById('origenVista').value = `${evento.origenGeneracion.nombre} - ${evento.origenGeneracion.descripcion}` || "";
 
     if (evento.latitudEpicentro != null && evento.longitudEpicentro != null) {
       document.getElementById('coordenadas').value = `${evento.latitudEpicentro}, ${evento.longitudEpicentro}`;
