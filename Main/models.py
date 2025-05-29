@@ -39,6 +39,11 @@ class Estado(models.Model):
     ambito = models.CharField(max_length=100)
     nombreEstado = models.CharField(max_length=100)
 
+    def esConfirmado(self) -> bool:
+        if self.nombreEstado == "Confirmado":
+            return True
+        return False
+
     def esRechazado(self) -> bool:
         if self.nombreEstado == "Rechazado":
             return True
@@ -108,9 +113,7 @@ class CambioEstado(models.Model):
     )
 
     def esActual(self) -> bool:
-        if self.fechaHoraFin == None:
-            return True
-        return False
+        return not self.fechaHoraFin
 
     def setFechaHoraFin(self, fecha_actual) -> None:
         self.fechaHoraFin = fecha_actual
@@ -153,24 +156,22 @@ class SerieTemporal(models.Model):
     muestraSismica = models.ManyToManyField(MuestraSismica)
 
     def getDatosMuestra(self, sismografos: list) -> dict:
-        # quizas vaya en el gestor
-        # En este momento estamos trabajando con un evento sismico, si queremos debbuggear
-        # habra que asignar varias ST al eventoSis Actual
         datosMuestras = []
         for muestra in self.muestraSismica.all():
             datosMuestras = muestra.getDatos()
-        ES = self.obtenerES(sismografos)
+
+        ES = self.obtenerES(sismografos, serie_temporal=self.fechaHoraRegistros)
         datosMuestreo = {"estacionSismologica": ES, "datosMuestras": datosMuestras}
+
+
         return datosMuestreo
 
-    def obtenerES(self, sismografos: list):
+    def obtenerES(self, sismografos: list, serie_temporal):
         for sismografo in sismografos:
-            for serie in sismografo.serieTemporal.all():
-                if serie.fechaHoraRegistros == self.fechaHoraRegistros:
-                    ES = sismografo.estacionSismologica
-                    return ES
-        return
-
+            ES = sismografo.obtenerSismografo(serie_temporal)
+            if ES:
+                return ES
+            
 
 class Sismografo(models.Model):
     fechaAdquisicion = models.DateTimeField(null=True, blank=True)
@@ -180,6 +181,14 @@ class Sismografo(models.Model):
         EstacionSismologica, on_delete=models.CASCADE
     )
     serieTemporal = models.ManyToManyField(SerieTemporal)
+
+    def obtenerSismografo(self, serie_comparar):
+        for serie in self.serieTemporal.all():
+                print(serie.fechaHoraRegistros, '   ', serie_comparar)
+                if serie.fechaHoraRegistros == serie_comparar:
+                    ES = self.estacionSismologica
+                    return ES
+        return None
 
 
 class EventoSismico(models.Model):
@@ -240,14 +249,9 @@ class EventoSismico(models.Model):
             ]
         )
 
-    def as_dict(self) -> dict:
+    def obtenerDatos(self) -> dict:
         return {
             "id": self.id,
-            "fechaHoraFin": (
-                self.fechaHoraFin.strftime("%Y-%m-%d %H:%M:%S")
-                if hasattr(self.fechaHoraFin, "strftime")
-                else self.fechaHoraFin
-            ),
             "fechaHoraOcurrencia": (
                 self.fechaHoraOcurrencia.strftime("%Y-%m-%d %H:%M:%S")
                 if hasattr(self.fechaHoraOcurrencia, "strftime")
@@ -260,15 +264,6 @@ class EventoSismico(models.Model):
             "magnitud": (
                 self.magnitud.numero if hasattr(self.magnitud, "numero") else 10
             ),
-            "origenGeneracion": (
-                self.origenGeneracion.getDatos()
-                if hasattr(self.origenGeneracion, "getDatos")
-                else self.origenGeneracion.nombre
-            ),
-            "alcanceSismo": self.alcanceSismo.getDatos(),
-            "estadoActual": self.estadoActual.nombreEstado,
-            "clasificacion": self.clasificacion.getDatos(),
-            "cambiosEstado": [x.estado.nombreEstado for x in self.cambiosEstado.all()],
         }
 
     def getAlcance(self) -> str:
@@ -281,7 +276,6 @@ class EventoSismico(models.Model):
         return self.origenGeneracion.getDatos()
 
     def crearCambioEstado(self, fecha_actual, estado: Estado, empleado=None) -> None:
-        print("dssadasddsa_ ddddddddddddddd:", fecha_actual, estado, empleado)
         nuevo_estado_cambio_estado = CambioEstado.objects.create(
             fechaHoraInicio=fecha_actual, fechaHoraFin=None, estado=estado, responsableInspeccion=empleado)
         self.cambiosEstado.add(nuevo_estado_cambio_estado)
@@ -289,21 +283,37 @@ class EventoSismico(models.Model):
         self.save()
 
     def bloquear(self, fecha_actual, estado: Estado) -> None:
+        cambio_estado_obt = None
         for cambio_estado in self.cambiosEstado.all():
             if cambio_estado.esActual():
-                cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
-                self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado)
-
+                cambio_estado_obt = cambio_estado
+                break
+        cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
+        self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado)
+                
+            
     def buscarSerieTemporal(self, sismografos: list):
         resultado = []
         for serieTemporal in self.serieTemporal.all():
             resultado.append(serieTemporal.getDatosMuestra(sismografos))
         return resultado
 
-    def rechazar(self, fecha_actual, estado: Estado) -> None:
+    def confirmar(self, fecha_actual, estado: Estado, empleado: Empleado) -> None:
         for cambio_estado in self.cambiosEstado.all():
             if cambio_estado.esActual():
                 cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
+                self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado, empleado=empleado)
+
+
+    def rechazar(self, fecha_actual) -> None:
+        for cambio_estado in self.cambiosEstado.all():
+            if cambio_estado.esActual():
+                cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
+    
+    def esAutodetectado(self):
+        if self.estadoActual.esAutodetectado():
+            return True
+        return False
 
 
 class Sesion(models.Model):

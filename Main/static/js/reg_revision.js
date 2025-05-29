@@ -1,27 +1,35 @@
 let evento = null
 let accionSeleccionada = null
 
+
 const selectAccion = document.getElementById('accion');
-selectAccion.addEventListener('change', function() {
+
+
+selectAccion.addEventListener('change', function () {
   accionSeleccionada = this.value;
   console.log('Acción seleccionada:', accionSeleccionada);
 });
 
+
 const modalElement = document.getElementById('confirmacionModal');
 const bootstrapModal = new bootstrap.Modal(modalElement);
+
 
 function abrirModal() {
   bootstrapModal.show();
 }
 
+
 function cerrarModal() {
   bootstrapModal.hide();
 }
+
 
 document.getElementById('btnSi').addEventListener('click', function () {
   cerrarModal();
   console.log('Se presionó SÍ');
 });
+
 
 document.getElementById('btnNo').addEventListener('click', function () {
   cerrarModal();
@@ -47,7 +55,9 @@ function getCookie(name) {
 
 function tomarModificacionDatos(id_evento, enviarDatos = false, magnitud = null, origen = null, alcance = null) {
   const url = new URL(window.location.href);
-
+  /*
+  EL MENSAJE tomarModificacionDatos y tomarOpcionAccion se envian juntos en este fetch
+  */
   if (enviarDatos) {
     body_to_send = {
       action: 'save',
@@ -59,11 +69,12 @@ function tomarModificacionDatos(id_evento, enviarDatos = false, magnitud = null,
     }
   }
 
-  else{
-    body_to_send={
+  else {
+    body_to_send = {
       id_evento: id_evento,
       actionToDo: accionSeleccionada,
-      action: 'dontSave'}
+      action: 'dontSave'
+    }
   }
 
   fetch(url, {
@@ -88,6 +99,7 @@ function tomarModificacionDatos(id_evento, enviarDatos = false, magnitud = null,
 
 
 const boton_enviar_datos = document.getElementById('tomarModificacionDatos');
+
 
 boton_enviar_datos.addEventListener('click', async function (e) {
   e.preventDefault();
@@ -196,7 +208,6 @@ function ofrecerModificarEvento() {
 function tomarConfirmacionVisualizacion() {
   const url = new URL(window.location.href);
   url.searchParams.set('action', 'tomar_confirmacion_visualizacion');
-  url.searchParams.set('respuesta', 'yes')
 
   fetch(url, {
     method: 'GET',
@@ -273,7 +284,7 @@ function getEventosSismicos() {
       data.forEach(evento => {
         const option = document.createElement('option');
         option.value = evento.id;
-        option.textContent = `${evento.fechaHoraOcurrencia} - ${evento.origenGeneracion.nombre} - ${evento.origenGeneracion.descripcion} - M${evento.magnitud}`;
+        option.textContent = `${evento.fechaHoraOcurrencia} - M${evento.magnitud}`;
         select.appendChild(option);
       });
     })
@@ -334,6 +345,7 @@ function eventoSeleccionadoChange() {
     console.warn('Evento no encontrado para el id:', idSeleccionado);
   }
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
   getEventosSismicos();
