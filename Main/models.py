@@ -290,8 +290,7 @@ class EventoSismico(models.Model):
                 break
         cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
         self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado)
-                
-            
+                      
     def buscarSerieTemporal(self, sismografos: list):
         resultado = []
         for serieTemporal in self.serieTemporal.all():
@@ -303,7 +302,6 @@ class EventoSismico(models.Model):
             if cambio_estado.esActual():
                 cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
                 self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado, empleado=empleado)
-
 
     def rechazar(self, fecha_actual) -> None:
         for cambio_estado in self.cambiosEstado.all():

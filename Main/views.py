@@ -169,7 +169,6 @@ class GestorResultRevManual:
                     return estado
 
     def tomarOpcionAccion(self, accion, evento_id, alcance, origen, magnitud, save):
-        print(save)
         if not (
             self.validarDatosSismicos(alcance, type="texto")
             and self.validarDatosSismicos(origen, type="texto")
@@ -207,11 +206,11 @@ class GestorResultRevManual:
 
         self.eventoSisActual = self.getEventoPorId(id=evento_id)
         self.fechaHoraActual = self.getFechaHoraActual()
-        self.empleado = self.sesion.buscarUsuarioLogueado()
 
         if accion == "rechazar":
             self.estado_Rechazado = self.buscarEstadoRechazado()
             self.eventoSisActual.rechazar(fecha_actual=self.fechaHoraActual)
+            self.empleado = self.sesion.buscarUsuarioLogueado()
             self.crearCambioEstado(
                 empleado=self.empleado,
                 fecha_actual=self.fechaHoraActual,
