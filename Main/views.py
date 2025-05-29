@@ -240,6 +240,7 @@ class GestorResultRevManual:
         )
 
     def finCU(self):
+        print(self.eventoSisActual)
         return "FIN CU"
 
     def mostrarVisualizarMapaYDatos(
