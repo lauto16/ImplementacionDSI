@@ -181,7 +181,6 @@ class GestorResultRevManual:
 
         # flujo alternativo: El analista de sismos modifica los datos del evento sismico
         if save:
-            print('dsajidsakjdasjkdsajkpo')
             evento_modificado = None
             try:
                 evento_modificado = EventoSismico.objects.get(id=evento_id)
