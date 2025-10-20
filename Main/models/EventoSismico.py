@@ -9,10 +9,12 @@ from .OrigenDeGeneracion import OrigenDeGeneracion
 from .SerieTemporal import SerieTemporal
 from .Empleado import Empleado
 
+
 class EventoSismico(models.Model):
     fechaHoraFin = models.DateTimeField(null=True, blank=True)
     fechaHoraOcurrencia = models.DateTimeField(null=True, blank=True)
-    idCompuesto = models.CharField(max_length=1000, primary_key=True, editable=False)
+    idCompuesto = models.CharField(
+        max_length=1000, primary_key=True, editable=False)
     latitudEpicentro = models.FloatField()
     longitudEpicentro = models.FloatField()
     latitudHipocentro = models.FloatField()
@@ -31,9 +33,9 @@ class EventoSismico(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.idCompuesto:
-            self.idCompuesto = f"{self.latitudEpicentro};{self.longitudEpicentro()}"
+            self.idCompuesto = f"{self.latitudEpicentro};{self.longitudEpicentro}"
         super().save(*args, **kwargs)
-    
+
     def __str__(self) -> str:
         def dict_from_obj(obj):
             if not obj:
@@ -145,5 +147,3 @@ class EventoSismico(models.Model):
         if self.estadoActual.esAutodetectado():
             return True
         return False
-
-
