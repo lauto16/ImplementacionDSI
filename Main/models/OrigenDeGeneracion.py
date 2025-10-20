@@ -1,0 +1,9 @@
+from django.db import models
+
+
+class OrigenDeGeneracion(models.Model):
+    descripcion = models.TextField()
+    nombre = models.CharField(max_length=100)
+
+    def getDatos(self) -> dict:
+        return {"nombre": self.nombre, "descripcion": self.descripcion}
