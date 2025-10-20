@@ -5,7 +5,7 @@ from .SerieTemporal import SerieTemporal
 
 class Sismografo(models.Model):
     fechaAdquisicion = models.DateTimeField(null=True, blank=True)
-    identificadorSismografo = models.CharField(max_length=100)
+    identificadorSismografo = models.CharField(max_length=100, primary_key=True)
     nroSerie = models.CharField(max_length=100)
     estacionSismologica = models.ForeignKey(
         EstacionSismologica, on_delete=models.CASCADE
