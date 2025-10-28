@@ -3,7 +3,7 @@ from django.db import models
 from .AlcanceSismo import AlcanceSismo
 from .CambioEstado import CambioEstado
 from .ClasificacionSismo import ClasificacionSismo
-from .Estado import Estado
+from .EstadoEventoSismico import EstadoEventoSismico
 from .MagnitudRichter import MagnitudRichter
 from .OrigenDeGeneracion import OrigenDeGeneracion
 from .SerieTemporal import SerieTemporal
@@ -24,7 +24,7 @@ class EventoSismico(models.Model):
         OrigenDeGeneracion, on_delete=models.CASCADE)
     alcanceSismo = models.ForeignKey(AlcanceSismo, on_delete=models.CASCADE)
     estadoActual = models.ForeignKey(
-        Estado, on_delete=models.CASCADE, related_name="eventos_actuales"
+        EstadoEventoSismico, on_delete=models.CASCADE, related_name="eventos_actuales"
     )
     clasificacion = models.ForeignKey(
         ClasificacionSismo, on_delete=models.CASCADE)
@@ -68,11 +68,11 @@ class EventoSismico(models.Model):
                 color(
                     f"Alcance del Sismo: {dict_from_obj(self.alcanceSismo)}", "1;35"),
                 color(
-                    f"Estado Actual: {dict_from_obj(self.estadoActual)}", "1;33"),
+                    f"EstadoEventoSismico Actual: {dict_from_obj(self.estadoActual)}", "1;33"),
                 color(
                     f"Clasificación: {dict_from_obj(self.clasificacion)}", "1;33"),
                 color(
-                    f"Cantidad de Cambios de Estado: {self.cambiosEstado.count()}",
+                    f"Cantidad de Cambios de EstadoEventoSismico: {self.cambiosEstado.count()}",
                     "1;31",
                 ),
                 color(
@@ -84,7 +84,7 @@ class EventoSismico(models.Model):
 
     def obtenerDatos(self) -> dict:
         return {
-            "id": self.id,
+            "id": self.idCompuesto,
             "fechaHoraOcurrencia": (
                 self.fechaHoraOcurrencia.strftime("%Y-%m-%d %H:%M:%S")
                 if hasattr(self.fechaHoraOcurrencia, "strftime")
@@ -109,21 +109,22 @@ class EventoSismico(models.Model):
     def getOrigenGeneracion(self) -> str:
         return self.origenGeneracion.getDatos()
 
-    def crearCambioEstado(self, fecha_actual, estado: Estado, empleado=None) -> None:
+    def crearCambioEstado(self, fecha_actual, estado: EstadoEventoSismico, empleado=None) -> None:
         nuevo_estado_cambio_estado = CambioEstado.objects.create(
             fechaHoraInicio=fecha_actual, fechaHoraFin=None, estado=estado, responsableInspeccion=empleado)
         self.cambiosEstado.add(nuevo_estado_cambio_estado)
         self.estadoActual = estado
         self.save()
 
-    def bloquear(self, fecha_actual, estado: Estado) -> None:
+    def bloquear(self, fecha_actual, estado: EstadoEventoSismico, empleado: Empleado) -> None:
         cambio_estado_obt = None
         for cambio_estado in self.cambiosEstado.all():
             if cambio_estado.esActual():
                 cambio_estado_obt = cambio_estado
                 break
+
         cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
-        self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado)
+        self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado, empleado=empleado)
 
     def buscarSerieTemporal(self, sismografos: list):
         resultado = []
@@ -131,19 +132,26 @@ class EventoSismico(models.Model):
             resultado.append(serieTemporal.getDatosMuestra(sismografos))
         return resultado
 
-    def confirmar(self, fecha_actual, estado: Estado, empleado: Empleado) -> None:
+    def confirmar(self, fecha_actual, estado: EstadoEventoSismico, empleado: Empleado) -> None:
         for cambio_estado in self.cambiosEstado.all():
             if cambio_estado.esActual():
                 cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
                 self.crearCambioEstado(
                     fecha_actual=fecha_actual, estado=estado, empleado=empleado)
 
-    def rechazar(self, fecha_actual) -> None:
+    def rechazar(self, fecha_actual, empleado: Empleado, estado_Rechazado: EstadoEventoSismico) -> None:
         for cambio_estado in self.cambiosEstado.all():
             if cambio_estado.esActual():
                 cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
+        
+        self.crearCambioEstado(
+                empleado=empleado,
+                fecha_actual=fecha_actual,
+                estado=estado_Rechazado,
+            )
 
     def esAutodetectado(self):
         if self.estadoActual.esAutodetectado():
             return True
         return False
+    

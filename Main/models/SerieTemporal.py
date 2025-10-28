@@ -1,5 +1,5 @@
 from django.db import models
-from .Estado import Estado
+from .EstadoEventoSismico import EstadoEventoSismico
 from .MuestraSismica import MuestraSismica
 
 
@@ -9,7 +9,7 @@ class SerieTemporal(models.Model):
         null=True, blank=True)
     fechaHoraRegistros = models.DateTimeField(null=True, blank=True)
     frecuenciaMuestreo = models.FloatField()
-    estado = models.ForeignKey(Estado, on_delete=models.CASCADE)
+    estado = models.ForeignKey(EstadoEventoSismico, on_delete=models.CASCADE)
     muestraSismica = models.ManyToManyField(MuestraSismica)
 
     def getDatosMuestra(self, sismografos: list) -> dict:

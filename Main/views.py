@@ -2,7 +2,7 @@
 from Main.models import (
     Empleado,
     Sesion,
-    Estado,
+    EstadoEventoSismico,
     Sismografo,
     EventoSismico,
 )
@@ -19,7 +19,7 @@ class GestorResultRevManual:
     def __init__(self, interfaz) -> None:
         self.eventos = self.getEventos()
         self.eventosAutodetectados = []
-        self.estados = list(Estado.objects.all())
+        self.estados = list(EstadoEventoSismico.objects.all())
         self.eventoSisActual = None
         self.fechaHoraActual = None
         self.estado_BloqueadoEnRevision = None
@@ -30,15 +30,15 @@ class GestorResultRevManual:
         self.origenGeneracionEventoSis = None
         self.ordenadoPorES = None
         self.estado_Rechazado = None
-        self.empleado = None
-        self.sesion = Sesion.objects.get(id=1)
+        self.sesion = Sesion.objects.get(usuario='cgomez@example.com')
         self.datos_eventos_autodetectados = []
+        self.empleado = self.sesion.buscarUsuarioLogueado()
 
     def getEventos(self):
         return list(EventoSismico.objects.all())
 
     def getEventoPorId(self, id: int):
-        return EventoSismico.objects.get(id=id)
+        return EventoSismico.objects.get(idCompuesto=id)
 
     def separarTexto(self, texto: str) -> tuple[str, str]:
         partes = texto.split("-", 1)
@@ -47,7 +47,6 @@ class GestorResultRevManual:
         return nombre, descripcion
 
     def validarDatosSismicos(self, valor, type: str) -> bool:
-        print(valor, type)
         if type == "texto":
             if "-" not in valor:
                 return False
@@ -69,18 +68,19 @@ class GestorResultRevManual:
     def getFechaHoraActual(self) -> datetime:
         return timezone.now()
 
-    def getEventoAutodetectado(self, id: int) -> EventoSismico:
+    def getEventoAutodetectado(self, idCompuesto: int) -> EventoSismico:
         for evento in self.eventosAutodetectados:
-            if evento.id == id:
+            if evento.idCompuesto == idCompuesto:
                 return evento
 
-    def tomarSelEventoSis(self, id_evento: int) -> None:
+    def tomarSelEventoSis(self, id_evento: str) -> None:
         # se necesita buscar el evento elegio entre los autodetectados
         self.eventosAutodetectados = self.buscarEventosAutodetectados()
-        self.eventoSisActual = self.getEventoAutodetectado(id=id_evento)
+        self.eventoSisActual = self.getEventoAutodetectado(idCompuesto=id_evento)
 
         # luego de obtener los datos de nuevo (la request borra los objetos) continuamos con el CU
         self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
+        print('estado bloiqueado en recvi: ', self.estado_BloqueadoEnRevision)
         self.fechaHoraActual = self.getFechaHoraActual()
         self.bloquearEventoSis()
         self.buscarDatosEventoSis()
@@ -121,7 +121,7 @@ class GestorResultRevManual:
 
     def bloquearEventoSis(self) -> None:
         self.eventoSisActual.bloquear(
-            fecha_actual=self.fechaHoraActual, estado=self.estado_BloqueadoEnRevision
+            fecha_actual=self.fechaHoraActual, estado=self.estado_BloqueadoEnRevision, empleado=self.empleado
         )
 
     def ordenarEventosSisPorFyH(self) -> None:
@@ -132,7 +132,7 @@ class GestorResultRevManual:
             ),
         )
 
-    def buscarEstadoBloqueadoEnRevision(self) -> Estado:
+    def buscarEstadoBloqueadoEnRevision(self) -> EstadoEventoSismico:
         for estado in self.estados:
             if estado.esAmbitoEventoSis():
                 if estado.esBloqueadoEnRevision():
@@ -162,7 +162,7 @@ class GestorResultRevManual:
     def llamarCUGenerarSismograma(self):
         return "Se llamó al CU generar Sismograma"
 
-    def buscarEstadoRechazado(self) -> Estado:
+    def buscarEstadoRechazado(self) -> EstadoEventoSismico:
         for estado in self.estados:
             if estado.esAmbitoEventoSis():
                 if estado.esRechazado():
@@ -183,8 +183,7 @@ class GestorResultRevManual:
         if save:
             evento_modificado = None
             try:
-                evento_modificado = EventoSismico.objects.get(id=evento_id)
-                print(evento_modificado)
+                evento_modificado = EventoSismico.objects.get(idCompuesto=evento_id)
             except EventoSismico.DoesNotExist:
                 return JsonResponse(
                     {"success": False, "message": "El evento sismico no existe"}
@@ -208,14 +207,9 @@ class GestorResultRevManual:
 
         if accion == "rechazar":
             self.estado_Rechazado = self.buscarEstadoRechazado()
-            self.eventoSisActual.rechazar(fecha_actual=self.fechaHoraActual)
+            self.eventoSisActual.rechazar(fecha_actual=self.fechaHoraActual, empleado=self.empleado, estado_Rechazado=self.estado_Rechazado)
             self.empleado = self.sesion.buscarUsuarioLogueado()
-            self.crearCambioEstado(
-                empleado=self.empleado,
-                fecha_actual=self.fechaHoraActual,
-                estado=self.estado_Rechazado,
-            )
-
+            
         elif accion == "confirmar":
             # caso alternativo: Si la opción seleccionada es Confirmar evento, se actualiza el estado del evento sísmico a confirmado, registrando la fecha y hora actual como fecha de confirmación.
             self.estado_Confirmado = self.buscarEstadoConfirmado()
@@ -227,7 +221,7 @@ class GestorResultRevManual:
 
         self.finCU()
 
-    def buscarEstadoConfirmado(self) -> Estado:
+    def buscarEstadoConfirmado(self) -> EstadoEventoSismico:
         for estado in self.estados:
             if estado.esAmbitoEventoSis():
                 if estado.esConfirmado():
@@ -239,7 +233,6 @@ class GestorResultRevManual:
         )
 
     def finCU(self):
-        print(self.eventoSisActual)
         return "FIN CU"
 
     def mostrarVisualizarMapaYDatos(
@@ -295,7 +288,7 @@ class InterfazResultRevManual(View):
         if action == "tomar_sel_evento_sismico":
             id_evento = request.GET.get("id_evento")
             diccionario_retorno = self.gestor.tomarSelEventoSis(
-                id_evento=int(id_evento)
+                id_evento=id_evento
             )
             res = {
                 "serieTemp": diccionario_retorno["datos_entrega"],

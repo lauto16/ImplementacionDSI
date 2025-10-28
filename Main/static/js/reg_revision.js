@@ -1,9 +1,9 @@
-let evento = null
-let accionSeleccionada = null
-
+let evento = null;
+let accionSeleccionada = null;
 
 const selectAccion = document.getElementById('accion');
 
+accionSeleccionada = selectAccion.value;
 
 selectAccion.addEventListener('change', function () {
   accionSeleccionada = this.value;
@@ -61,7 +61,7 @@ function tomarModificacionDatos(id_evento, enviarDatos = false, magnitud = null,
   if (enviarDatos) {
     body_to_send = {
       action: 'save',
-      actionToDo: accionSeleccionada,
+      actionToDo: selectAccion.value,
       id_evento: id_evento,
       alcance: alcance,
       origen: origen,
@@ -72,7 +72,7 @@ function tomarModificacionDatos(id_evento, enviarDatos = false, magnitud = null,
   else {
     body_to_send = {
       id_evento: id_evento,
-      actionToDo: accionSeleccionada,
+      actionToDo: selectAccion.value,
       action: 'dontSave'
     }
   }
