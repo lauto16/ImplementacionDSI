@@ -1,13 +1,11 @@
 import os
 import django
+from datetime import datetime
+from django.utils import timezone
+
 # Configurar entorno
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Implementacion.settings')
 django.setup()
-
-
-from datetime import datetime
-from random import uniform, choice
-from django.utils import timezone
 
 from Main.models import (
     OrigenDeGeneracion,
@@ -27,10 +25,9 @@ from Main.models import (
     EventoSismico,
 )
 
-# Limpieza opcional de tablas (solo en entorno de desarrollo)
-
 
 def clear_all():
+    """Limpia las tablas en el orden correcto para evitar errores de FK"""
     models = [
         EventoSismico, Sismografo, SerieTemporal, MuestraSismica, DetalleMuestraSismica,
         CambioEstado, Usuario, Empleado, Estado, EstacionSismologica, TipoDeDato,
@@ -61,32 +58,21 @@ def seed():
     )
 
     # ==== Magnitud ====
-    m1 = MagnitudRichter.objects.create(
-        numero=4.5, descripcionMagnitud="Moderado")
-    m2 = MagnitudRichter.objects.create(
-        numero=6.2, descripcionMagnitud="Fuerte")
+    m1 = MagnitudRichter.objects.create(numero=4.5, descripcionMagnitud="Moderado")
+    m2 = MagnitudRichter.objects.create(numero=6.2, descripcionMagnitud="Fuerte")
 
     # ==== Alcance ====
-    a1 = AlcanceSismo.objects.create(
-        nombre="Local", descripcion="Percibido en una zona reducida")
-    a2 = AlcanceSismo.objects.create(
-        nombre="Regional", descripcion="Percibido en varias provincias")
+    a1 = AlcanceSismo.objects.create(nombre="Local", descripcion="Percibido en una zona reducida")
+    a2 = AlcanceSismo.objects.create(nombre="Regional", descripcion="Percibido en varias provincias")
 
     # ==== Estados ====
-    e1 = Estado.objects.create(
-        nombreEstado="Autodetectado", ambito="EventoSismico")
-    e2 = Estado.objects.create(
-        nombreEstado="Confirmado", ambito="EventoSismico")
-    e3 = Estado.objects.create(
-        nombreEstado="Rechazado", ambito="EventoSismico")
+    e1 = Estado.objects.create(nombreEstado="Autodetectado", ambito="EventoSismico")
+    e2 = Estado.objects.create(nombreEstado="Confirmado", ambito="EventoSismico")
+    e3 = Estado.objects.create(nombreEstado="Rechazado", ambito="EventoSismico")
 
     # ==== Tipo de Dato ====
-    td1 = TipoDeDato.objects.create(
-        denominacion="Aceleración", nombreUnidadMedida="m/s^2", valorUmbral=0.5
-    )
-    td2 = TipoDeDato.objects.create(
-        denominacion="Velocidad", nombreUnidadMedida="m/s", valorUmbral=1.0
-    )
+    td1 = TipoDeDato.objects.create(denominacion="Aceleración", nombreUnidadMedida="m/s^2", valorUmbral=0.5)
+    td2 = TipoDeDato.objects.create(denominacion="Velocidad", nombreUnidadMedida="m/s", valorUmbral=1.0)
 
     # ==== Estación Sismológica ====
     es1 = EstacionSismologica.objects.create(
@@ -100,25 +86,15 @@ def seed():
     )
 
     # ==== Empleados / Usuarios ====
-    emp1 = Empleado.objects.create(
-        nombre="Carlos", apellido="Gómez", mail="cgomez@example.com", telefono="3515551234"
-    )
-    emp2 = Empleado.objects.create(
-        nombre="Laura", apellido="Pérez", mail="lperez@example.com", telefono="3515555678"
-    )
+    emp1 = Empleado.objects.create(nombre="Carlos", apellido="Gómez", mail="cgomez@example.com", telefono="3515551234")
+    emp2 = Empleado.objects.create(nombre="Laura", apellido="Pérez", mail="lperez@example.com", telefono="3515555678")
 
-    user1 = Usuario.objects.create(
-        empleado=emp1, contrasenia="1234", nombreUsuario="cgomez")
-    user2 = Usuario.objects.create(
-        empleado=emp2, contrasenia="abcd", nombreUsuario="lperez")
+    user1 = Usuario.objects.create(empleado=emp1, contrasenia="1234", nombreUsuario="cgomez")
+    user2 = Usuario.objects.create(empleado=emp2, contrasenia="abcd", nombreUsuario="lperez")
 
     # ==== Cambios de Estado ====
-    ce1 = CambioEstado.objects.create(
-        fechaHoraInicio=timezone.now(), estado=e1, responsableInspeccion=emp1
-    )
-    ce2 = CambioEstado.objects.create(
-        fechaHoraInicio=timezone.now(), estado=e2, responsableInspeccion=emp2
-    )
+    ce1 = CambioEstado.objects.create(fechaHoraInicio=timezone.now(), estado=e1, responsableInspeccion=emp1)
+    ce2 = CambioEstado.objects.create(fechaHoraInicio=timezone.now(), estado=e2, responsableInspeccion=emp2)
 
     # ==== Datos de Muestras ====
     dm1 = DetalleMuestraSismica.objects.create(valor=0.45, tipoDeDato=td1)
@@ -164,7 +140,7 @@ def seed():
         magnitud=m1,
         origenGeneracion=og1,
         alcanceSismo=a1,
-        estadoActual=e1,
+        estadoActual=e1,  # <--- FK hacia Estado con nombreEstado como PK
         clasificacion=c1,
         fechaHoraFin=timezone.now(),
     )
