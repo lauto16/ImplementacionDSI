@@ -8,6 +8,10 @@ from .MagnitudRichter import MagnitudRichter
 from .OrigenDeGeneracion import OrigenDeGeneracion
 from .SerieTemporal import SerieTemporal
 from .Empleado import Empleado
+from .Confirmado import Confirmado
+from .Rechazado import Rechazado
+from .Autodetectado import Autodetectado
+from .BloqueadoEnRevision import BloqueadoEnRevision
 
 
 class EventoSismico(models.Model):
