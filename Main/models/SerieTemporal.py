@@ -9,7 +9,8 @@ class SerieTemporal(models.Model):
         null=True, blank=True)
     fechaHoraRegistros = models.DateTimeField(null=True, blank=True)
     frecuenciaMuestreo = models.FloatField()
-    estado = models.ForeignKey(EstadoEventoSismico, on_delete=models.CASCADE)
+    # La logica de la persistencia del estado la vemos despues
+    # estado = models.ForeignKey(EstadoEventoSismico, on_delete=models.CASCADE)
     muestraSismica = models.ManyToManyField(MuestraSismica)
 
     def getDatosMuestra(self, sismografos: list) -> dict:
@@ -29,4 +30,3 @@ class SerieTemporal(models.Model):
             ES = sismografo.obtenerSismografo(serie_temporal)
             if ES:
                 return ES
-

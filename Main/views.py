@@ -19,7 +19,6 @@ class GestorResultRevManual:
     def __init__(self, interfaz) -> None:
         self.eventos = self.getEventos()
         self.eventosAutodetectados = []
-        self.estados = list(EstadoEventoSismico.objects.all())
         self.eventoSisActual = None
         self.fechaHoraActual = None
         self.estado_BloqueadoEnRevision = None
@@ -76,10 +75,11 @@ class GestorResultRevManual:
     def tomarSelEventoSis(self, id_evento: str) -> None:
         # se necesita buscar el evento elegio entre los autodetectados
         self.eventosAutodetectados = self.buscarEventosAutodetectados()
-        self.eventoSisActual = self.getEventoAutodetectado(idCompuesto=id_evento)
+        self.eventoSisActual = self.getEventoAutodetectado(
+            idCompuesto=id_evento)
 
         # luego de obtener los datos de nuevo (la request borra los objetos) continuamos con el CU
-        self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
+        # self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
         print('estado bloiqueado en recvi: ', self.estado_BloqueadoEnRevision)
         self.fechaHoraActual = self.getFechaHoraActual()
         self.bloquearEventoSis()
@@ -163,10 +163,11 @@ class GestorResultRevManual:
         return "Se llamó al CU generar Sismograma"
 
     def buscarEstadoRechazado(self) -> EstadoEventoSismico:
-        for estado in self.estados:
-            if estado.esAmbitoEventoSis():
-                if estado.esRechazado():
-                    return estado
+        # for estado in self.estados:
+        #     if estado.esAmbitoEventoSis():
+        #         if estado.esRechazado():
+        #             return estado
+        pass
 
     def tomarOpcionAccion(self, accion, evento_id, alcance, origen, magnitud, save):
         if not (
@@ -183,7 +184,8 @@ class GestorResultRevManual:
         if save:
             evento_modificado = None
             try:
-                evento_modificado = EventoSismico.objects.get(idCompuesto=evento_id)
+                evento_modificado = EventoSismico.objects.get(
+                    idCompuesto=evento_id)
             except EventoSismico.DoesNotExist:
                 return JsonResponse(
                     {"success": False, "message": "El evento sismico no existe"}
@@ -206,13 +208,14 @@ class GestorResultRevManual:
         self.fechaHoraActual = self.getFechaHoraActual()
 
         if accion == "rechazar":
-            self.estado_Rechazado = self.buscarEstadoRechazado()
-            self.eventoSisActual.rechazar(fecha_actual=self.fechaHoraActual, empleado=self.empleado, estado_Rechazado=self.estado_Rechazado)
+            # self.estado_Rechazado = self.buscarEstadoRechazado()
+            self.eventoSisActual.rechazar(
+                fecha_actual=self.fechaHoraActual, empleado=self.empleado, estado_Rechazado=self.estado_Rechazado)
             self.empleado = self.sesion.buscarUsuarioLogueado()
-            
+
         elif accion == "confirmar":
             # caso alternativo: Si la opción seleccionada es Confirmar evento, se actualiza el estado del evento sísmico a confirmado, registrando la fecha y hora actual como fecha de confirmación.
-            self.estado_Confirmado = self.buscarEstadoConfirmado()
+            # self.estado_Confirmado = self.buscarEstadoConfirmado()
             self.eventoSisActual.confirmar(
                 fecha_actual=self.fechaHoraActual,
                 estado=self.estado_Confirmado,
@@ -222,10 +225,11 @@ class GestorResultRevManual:
         self.finCU()
 
     def buscarEstadoConfirmado(self) -> EstadoEventoSismico:
-        for estado in self.estados:
-            if estado.esAmbitoEventoSis():
-                if estado.esConfirmado():
-                    return estado
+        # for estado in self.estados:
+        #     if estado.esAmbitoEventoSis():
+        #         if estado.esConfirmado():
+        #             return estado
+        pass
 
     def crearCambioEstado(self, fecha_actual, estado, empleado: Empleado) -> None:
         self.eventoSisActual.crearCambioEstado(

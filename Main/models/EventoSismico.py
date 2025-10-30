@@ -8,6 +8,8 @@ from .MagnitudRichter import MagnitudRichter
 from .OrigenDeGeneracion import OrigenDeGeneracion
 from .SerieTemporal import SerieTemporal
 from .Empleado import Empleado
+from .EstadoEventoSismico import Autodetectado
+from .Estado import Estado
 
 
 class EventoSismico(models.Model):
@@ -23,13 +25,11 @@ class EventoSismico(models.Model):
     origenGeneracion = models.ForeignKey(
         OrigenDeGeneracion, on_delete=models.CASCADE)
     alcanceSismo = models.ForeignKey(AlcanceSismo, on_delete=models.CASCADE)
-    estadoActual = models.ForeignKey(
-        EstadoEventoSismico, on_delete=models.CASCADE, related_name="eventos_actuales"
-    )
     clasificacion = models.ForeignKey(
         ClasificacionSismo, on_delete=models.CASCADE)
     cambiosEstado = models.ManyToManyField(CambioEstado)
     serieTemporal = models.ManyToManyField(SerieTemporal)
+    estadoActual = Autodetectado()
 
     def save(self, *args, **kwargs):
         if not self.idCompuesto:
@@ -116,15 +116,10 @@ class EventoSismico(models.Model):
         self.estadoActual = estado
         self.save()
 
-    def bloquear(self, fecha_actual, estado: EstadoEventoSismico, empleado: Empleado) -> None:
-        cambio_estado_obt = None
-        for cambio_estado in self.cambiosEstado.all():
-            if cambio_estado.esActual():
-                cambio_estado_obt = cambio_estado
-                break
-
-        cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
-        self.crearCambioEstado(fecha_actual=fecha_actual, estado=estado, empleado=empleado)
+    def bloquear(self, fecha_actual, empleado: Empleado) -> None:
+        # en este momento, el atibuto estadoActual pasa a tener una instancia de BloqueadoEnRevision
+        self.estadoActual = self.estadoActual.bloquear(
+            fecha_actual=fecha_actual, empleado=empleado)
 
     def buscarSerieTemporal(self, sismografos: list):
         resultado = []
@@ -143,15 +138,14 @@ class EventoSismico(models.Model):
         for cambio_estado in self.cambiosEstado.all():
             if cambio_estado.esActual():
                 cambio_estado.setFechaHoraFin(fecha_actual=fecha_actual)
-        
+
         self.crearCambioEstado(
-                empleado=empleado,
-                fecha_actual=fecha_actual,
-                estado=estado_Rechazado,
-            )
+            empleado=empleado,
+            fecha_actual=fecha_actual,
+            estado=estado_Rechazado,
+        )
 
     def esAutodetectado(self):
         if self.estadoActual.esAutodetectado():
             return True
         return False
-    

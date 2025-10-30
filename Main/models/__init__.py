@@ -14,5 +14,4 @@ from .SerieTemporal import *
 from .Sismografo import *
 from .EventoSismico import *
 from .Sesion import *
-
-
+from .Estado import *
