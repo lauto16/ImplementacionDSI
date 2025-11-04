@@ -38,3 +38,6 @@ class EstadoEventoSismico:
 
     def rechazar(self, evento_sismico, fecha_actual, empleado) -> None:
         pass
+
+    def esAutodetectado(self) -> bool:
+        return self.nombreEstado == 'Autodetectado'

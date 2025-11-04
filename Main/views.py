@@ -4,7 +4,6 @@ from Main.models import (
     Sismografo,
     EventoSismico,
 )
-from Main.models.EstadoEventoSismico import Estado
 from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -18,18 +17,16 @@ class GestorResultRevManual:
     def __init__(self, interfaz) -> None:
         self.eventos = self.getEventos()
         self.eventosAutodetectados = []
-        self.estados = list(Estado.objects.all())
         self.eventoSisActual = None
         self.fechaHoraActual = None
-        self.estado_BloqueadoEnRevision = None
         self.sismografos = list(Sismografo.objects.all())
         self.interfaz = interfaz
         self.alcanceEventoSis = None
         self.clasificacionEventoSis = None
         self.origenGeneracionEventoSis = None
         self.ordenadoPorES = None
-        self.estado_Rechazado = None
         self.sesion = Sesion.objects.get(usuario='cgomez@example.com')
+
         self.datos_eventos_autodetectados = []
         self.empleado = self.sesion.buscarUsuarioLogueado()
 
@@ -80,7 +77,6 @@ class GestorResultRevManual:
 
         # luego de obtener los datos de nuevo (la request borra los objetos) continuamos con el CU
         # self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
-        print('estado bloiqueado en recvi: ', self.estado_BloqueadoEnRevision)
         self.fechaHoraActual = self.getFechaHoraActual()
         self.bloquearEventoSis()
         self.buscarDatosEventoSis()
@@ -110,6 +106,7 @@ class GestorResultRevManual:
         return diccionario_retorno
 
     def getEventosAutodetectados(self) -> list:
+        # TODO
         for evento in self.eventos:
             if evento.esAutodetectado():
                 self.eventosAutodetectados.append(evento)
@@ -121,7 +118,7 @@ class GestorResultRevManual:
 
     def bloquearEventoSis(self) -> None:
         self.eventoSisActual.bloquear(
-            fecha_actual=self.fechaHoraActual, estado=self.estado_BloqueadoEnRevision, empleado=self.empleado
+            fecha_actual=self.fechaHoraActual, empleado=self.empleado
         )
 
     def ordenarEventosSisPorFyH(self) -> None:
@@ -131,16 +128,16 @@ class GestorResultRevManual:
                 x["fechaHoraOcurrencia"], "%Y-%m-%d %H:%M:%S"
             ),
         )
-
-    def buscarEstadoBloqueadoEnRevision(self) -> Estado:
-        for estado in self.estados:
-            if estado.esAmbitoEventoSis():
-                if estado.esBloqueadoEnRevision():
-                    return estado
+    # STATE
+    # def buscarEstadoBloqueadoEnRevision(self) -> Estado:
+    #     for estado in self.estados:
+    #         if estado.esAmbitoEventoSis():
+    #             if estado.esBloqueadoEnRevision():
+    #                 return estado
 
     def buscarEventosAutodetectados(self) -> list:
         for evento in self.eventos:
-            if evento.estadoActual.esAutodetectado:
+            if evento.esAutodetectado():
                 self.eventosAutodetectados.append(evento)
         return self.eventosAutodetectados
 
@@ -161,12 +158,12 @@ class GestorResultRevManual:
 
     def llamarCUGenerarSismograma(self):
         return "Se llamó al CU generar Sismograma"
-
-    def buscarEstadoRechazado(self) -> Estado:
-        for estado in self.estados:
-            if estado.esAmbitoEventoSis():
-                if estado.esRechazado():
-                    return estado
+    # STATE
+    # def buscarEstadoRechazado(self) -> Estado:
+    #     for estado in self.estados:
+    #         if estado.esAmbitoEventoSis():
+    #             if estado.esRechazado():
+    #                 return estado
 
     def tomarOpcionAccion(self, accion, evento_id, alcance, origen, magnitud, save):
         if not (
@@ -205,34 +202,32 @@ class GestorResultRevManual:
 
         self.eventoSisActual = self.getEventoPorId(id=evento_id)
         self.fechaHoraActual = self.getFechaHoraActual()
-
+        # TODO creo que deberia ser aca el CE
         if accion == "rechazar":
-            # self.estado_Rechazado = self.buscarEstadoRechazado()
-            self.eventoSisActual.rechazar(
-                fecha_actual=self.fechaHoraActual, empleado=self.empleado, estado_Rechazado=self.estado_Rechazado)
             self.empleado = self.sesion.buscarUsuarioLogueado()
+            self.eventoSisActual.rechazar(
+                fecha_actual=self.fechaHoraActual, empleado=self.empleado)
 
         elif accion == "confirmar":
             # caso alternativo: Si la opción seleccionada es Confirmar evento, se actualiza el estado del evento sísmico a confirmado, registrando la fecha y hora actual como fecha de confirmación.
             # self.estado_Confirmado = self.buscarEstadoConfirmado()
             self.eventoSisActual.confirmar(
                 fecha_actual=self.fechaHoraActual,
-                estado=self.estado_Confirmado,
                 empleado=self.empleado,
             )
 
         self.finCU()
+    # STATE
+    # def buscarEstadoConfirmado(self) -> Estado:
+    #     for estado in self.estados:
+    #         if estado.esAmbitoEventoSis():
+    #             if estado.esConfirmado():
+    #                 return estado
 
-    def buscarEstadoConfirmado(self) -> Estado:
-        for estado in self.estados:
-            if estado.esAmbitoEventoSis():
-                if estado.esConfirmado():
-                    return estado
-
-    def crearCambioEstado(self, fecha_actual, estado, empleado: Empleado) -> None:
-        self.eventoSisActual.crearCambioEstado(
-            fecha_actual=fecha_actual, estado=estado, empleado=empleado
-        )
+    # def crearCambioEstado(self, fecha_actual, estado, empleado: Empleado) -> None:
+    #     self.eventoSisActual.crearCambioEstado(
+    #         fecha_actual=fecha_actual, estado=estado, empleado=empleado
+    #     )
 
     def finCU(self):
         return "FIN CU"

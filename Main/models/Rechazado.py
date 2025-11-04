@@ -1,4 +1,4 @@
-from EstadoEventoSismico import *
+from .EstadoEventoSismico import *
 
 
 class Rechazado(EstadoEventoSismico):

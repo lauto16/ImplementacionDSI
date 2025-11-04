@@ -1,6 +1,7 @@
 from .EstadoEventoSismico import *
 from .BloqueadoEnRevision import *
 
+
 class Autodetectado(EstadoEventoSismico):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,13 +23,12 @@ class Autodetectado(EstadoEventoSismico):
                 break
 
         cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
-        
+
         self.crearCambioEstado(
             evento_sismico=evento_sismico,
             fecha_actual=fecha_actual,
             estado=estadoBloqeadoEnRevision.estadoPersistencia,
             empleado=empleado,
         )
-        
-        evento_sismico.estadoActualEjecucion = estadoBloqeadoEnRevision
 
+        evento_sismico.estadoActualEjecucion = estadoBloqeadoEnRevision
