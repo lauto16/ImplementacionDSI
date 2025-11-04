@@ -1,9 +1,8 @@
-from django.db import models
+from EstadoEventoSismico import *
 
 
-class OrigenDeGeneracion(models.Model):
-    descripcion = models.TextField()
-    nombre = models.CharField(max_length=100)
-
-    def getDatos(self) -> dict:
-        return {"nombre": self.nombre, "descripcion": self.descripcion}
+class Rechazado(EstadoEventoSismico):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.nombreEstado = "Rechazado"
+        self.estadoPersistencia = self.setEstadoPersistencia()

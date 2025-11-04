@@ -1,11 +1,10 @@
-# IMPORTS DE MODELOS
 from Main.models import (
     Empleado,
     Sesion,
-    EstadoEventoSismico,
     Sismografo,
     EventoSismico,
 )
+from Main.models.EstadoEventoSismico import Estado
 from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -19,6 +18,7 @@ class GestorResultRevManual:
     def __init__(self, interfaz) -> None:
         self.eventos = self.getEventos()
         self.eventosAutodetectados = []
+        self.estados = list(Estado.objects.all())
         self.eventoSisActual = None
         self.fechaHoraActual = None
         self.estado_BloqueadoEnRevision = None
@@ -132,7 +132,7 @@ class GestorResultRevManual:
             ),
         )
 
-    def buscarEstadoBloqueadoEnRevision(self) -> EstadoEventoSismico:
+    def buscarEstadoBloqueadoEnRevision(self) -> Estado:
         for estado in self.estados:
             if estado.esAmbitoEventoSis():
                 if estado.esBloqueadoEnRevision():
@@ -162,12 +162,11 @@ class GestorResultRevManual:
     def llamarCUGenerarSismograma(self):
         return "Se llamó al CU generar Sismograma"
 
-    def buscarEstadoRechazado(self) -> EstadoEventoSismico:
-        # for estado in self.estados:
-        #     if estado.esAmbitoEventoSis():
-        #         if estado.esRechazado():
-        #             return estado
-        pass
+    def buscarEstadoRechazado(self) -> Estado:
+        for estado in self.estados:
+            if estado.esAmbitoEventoSis():
+                if estado.esRechazado():
+                    return estado
 
     def tomarOpcionAccion(self, accion, evento_id, alcance, origen, magnitud, save):
         if not (
@@ -224,12 +223,11 @@ class GestorResultRevManual:
 
         self.finCU()
 
-    def buscarEstadoConfirmado(self) -> EstadoEventoSismico:
-        # for estado in self.estados:
-        #     if estado.esAmbitoEventoSis():
-        #         if estado.esConfirmado():
-        #             return estado
-        pass
+    def buscarEstadoConfirmado(self) -> Estado:
+        for estado in self.estados:
+            if estado.esAmbitoEventoSis():
+                if estado.esConfirmado():
+                    return estado
 
     def crearCambioEstado(self, fecha_actual, estado, empleado: Empleado) -> None:
         self.eventoSisActual.crearCambioEstado(

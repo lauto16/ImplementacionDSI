@@ -1,14 +1,3 @@
-import os
-import django
-# Configurar entorno
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Implementacion.settings')
-django.setup()
-
-
-from datetime import datetime
-from random import uniform, choice
-from django.utils import timezone
-
 from Main.models import (
     OrigenDeGeneracion,
     ClasificacionSismo,
@@ -26,6 +15,15 @@ from Main.models import (
     Sismografo,
     EventoSismico,
 )
+from django.utils import timezone
+from random import uniform, choice
+from datetime import datetime
+import os
+import django
+# Configurar entorno
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tu_proyecto.settings')
+django.setup()
+
 
 # Limpieza opcional de tablas (solo en entorno de desarrollo)
 
@@ -156,6 +154,7 @@ def seed():
 
     # ==== Evento Sísmico ====
     ev = EventoSismico.objects.create(
+        idCompuesto="EV001",
         fechaHoraOcurrencia=timezone.now(),
         latitudEpicentro=-31.41,
         longitudEpicentro=-64.19,

@@ -1,59 +1,40 @@
-from abc import ABC, abstractmethod
-from django.db import models
-
 from .Empleado import Empleado
+from .CambioEstado import CambioEstado
 from .Estado import Estado
 
 
-class EstadoEventoSismico(models.Model):
-    """
-    Clase padre para implemetar State
-    """
-    ambito = 'eventoSismico'
-    nombre = ''
+class EstadoEventoSismico:
+    def __init__(self):
+        self.nombreEstado = ""
+        self.ambito = "EventoSismico"
+        self.estadoPersistencia = Estado
 
-    class Meta:
-        abstract = True
+    def setEstadoPersistencia(self):
+        """
+        Setea el registro de la BD que representa el estado
+        """
+        all_estados = Estado.objects.all().filter(ambito="EventoSismico")
+        for estado in all_estados:
+            if estado.nombreEstado == self.nombreEstado:
+                return estado
+        return None
 
-    def bloquear(self, evento, fecha_actual, empleado):
-        """Bloquea el evento (si el estado lo permite)."""
+    def crearCambioEstado(self, evento_sismico, fecha_actual, estado: Estado, empleado=None) -> None:
+        nuevo_estado_cambio_estado = CambioEstado.objects.create(
+            fechaHoraInicio=fecha_actual,
+            fechaHoraFin=None,
+            estado=estado,
+            responsableInspeccion=empleado,
+        )
+        evento_sismico.cambiosEstado.add(nuevo_estado_cambio_estado)
+        evento_sismico.estadoActual = estado
+        evento_sismico.save()
+
+    def bloquear(self, evento_sismico, fecha_actual, empleado) -> None:
         pass
 
-    def confirmar(self, evento, empleado):
-        """Confirma el evento (si el estado lo permite)."""
+    def confirmar(self, evento_sismico, fecha_actual, empleado) -> None:
         pass
 
-    def rechazar(self, evento, empleado):
-        """Rechaza el evento (si el estado lo permite)."""
+    def rechazar(self, evento_sismico, fecha_actual, empleado) -> None:
         pass
-
-    def crear_estado(self, evento):
-        """Crea un nuevo estado asociado al evento."""
-        pass
-
-
-class Confirmado(EstadoEventoSismico):
-    nombre = models.ForeignKey(Estado, default=8, on_delete=models.CASCADE)
-
-
-class Rechazado():
-    nombre = models.ForeignKey(Estado, default=9, on_delete=models.CASCADE)
-
-
-class BloqueadoEnRevision(EstadoEventoSismico):
-    nombre = models.ForeignKey(Estado, default=10, on_delete=models.CASCADE)
-
-    def confirmar(self) -> None:
-        pass
-
-    def rechazar(self) -> None:
-        pass
-
-
-class Autodetectado(EstadoEventoSismico):
-
-    nombre = models.ForeignKey(Estado, default=7, on_delete=models.CASCADE)
-
-    def bloquear(self, fecha_actual, empleado: Empleado) -> BloqueadoEnRevision:
-        # Setear el cambio de estado etc, etc y todas las cosas relativas al bloqueo
-        return BloqueadoEnRevision()
