@@ -12,7 +12,7 @@ from .Confirmado import Confirmado
 from .Rechazado import Rechazado
 from .Autodetectado import Autodetectado
 from .BloqueadoEnRevision import BloqueadoEnRevision
-
+from ..views import GestorResultRevManual
 
 class EventoSismico(models.Model):
     fechaHoraFin = models.DateTimeField(null=True, blank=True)
@@ -137,9 +137,9 @@ class EventoSismico(models.Model):
         self.estadoActual = estado
         self.save()
 
-    def bloquear(self, fecha_actual, empleado: Empleado) -> None:
+    def bloquear(self, gestor: GestorResultRevManual, fecha_actual) -> None:
         self.estadoActualEjecucion.bloquear(
-            evento_sismico=self, fecha_actual=fecha_actual, empleado=empleado
+            evento_sismico=self, fecha_actual=fecha_actual
         )
 
     def buscarSerieTemporal(self, sismografos: list):

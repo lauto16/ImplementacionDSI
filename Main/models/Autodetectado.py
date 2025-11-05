@@ -1,6 +1,6 @@
 from .EstadoEventoSismico import *
 from .BloqueadoEnRevision import *
-
+from ..views import GestorResultRevManual
 
 class Autodetectado(EstadoEventoSismico):
     def __init__(self, *args, **kwargs):
@@ -9,11 +9,15 @@ class Autodetectado(EstadoEventoSismico):
         self.estadoPersistencia = self.setEstadoPersistencia()
 
     def bloquear(
-        self, evento_sismico, fecha_actual, empleado: Empleado
+        self, evento_sismico, fecha_actual, gestor: GestorResultRevManual
     ) -> None:
         print('cambiando a estado bloqueado en revision')
+
+        # buscar el empleado actual
+        empleado = gestor.sesion.buscarUsuarioLogueado()
+
         # crear el estado BloqueadoEnRevision
-        estadoBloqeadoEnRevision = BloqueadoEnRevision()
+        estadoBloqueadoEnRevision = BloqueadoEnRevision()
 
         # buscar el cambio de estado actual, ponerle fecha fin y crear el nuevo cambio de estado
         cambio_estado_obt = None
@@ -24,11 +28,24 @@ class Autodetectado(EstadoEventoSismico):
 
         cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
 
-        self.crearCambioEstado(
+        cambio_estado_nuevo = self.crearCambioEstado(
             evento_sismico=evento_sismico,
             fecha_actual=fecha_actual,
-            estado=estadoBloqeadoEnRevision.estadoPersistencia,
+            estado=estadoBloqueadoEnRevision.estadoPersistencia,
             empleado=empleado,
         )
+        
+        # set del estado en persistencia (fk)
+        evento_sismico.estadoActual = estadoBloqueadoEnRevision.estadoPersistencia
+        
+        # add del estado en ejecucion
+        evento_sismico.estadoActualEjecucion = estadoBloqueadoEnRevision
 
-        evento_sismico.estadoActualEjecucion = estadoBloqeadoEnRevision
+        # agregar cambio estado
+        evento_sismico.cambiosEstado.add(cambio_estado_nuevo)
+            
+        
+        # no se contempla en diagrama por ser parte del guardado en bd
+        evento_sismico.save()
+
+        
