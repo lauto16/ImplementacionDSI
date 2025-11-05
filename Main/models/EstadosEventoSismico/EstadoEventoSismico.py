@@ -1,6 +1,5 @@
-from .Empleado import Empleado
-from .CambioEstado import CambioEstado
-from .Estado import Estado
+from ..CambioEstado import CambioEstado
+from ..Estado import Estado
 
 
 class EstadoEventoSismico:

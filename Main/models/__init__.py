@@ -2,7 +2,7 @@ from .OrigenDeGeneracion import *
 from .ClasificacionSismo import *
 from .MagnitudRichter import *
 from .AlcanceSismo import *
-from .EstadoEventoSismico import *
+from .EstadosEventoSismico.EstadoEventoSismico import *
 from .TipoDeDato import *
 from .EstacionSismologica import *
 from .Empleado import *

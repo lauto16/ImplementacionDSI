@@ -1,9 +1,6 @@
-from Main.models import (
-    Empleado,
-    Sesion,
-    Sismografo,
-    EventoSismico,
-)
+from Main.models.Sesion import Sesion
+from Main.models.EventoSismico import EventoSismico
+from Main.models.Sismografo import Sismografo
 from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -118,7 +115,7 @@ class GestorResultRevManual:
     
     def bloquearEventoSis(self) -> None:
         self.eventoSisActual.bloquear(gestor=self,
-            fecha_actual=self.fechaHoraActual, empleado=self.empleado
+            fecha_actual=self.fechaHoraActual
         )
 
     def ordenarEventosSisPorFyH(self) -> None:

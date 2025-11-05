@@ -1,5 +1,5 @@
 from django.db import models
-from .EstadoEventoSismico import Estado
+from .Estado import Estado
 from .MuestraSismica import MuestraSismica
 
 

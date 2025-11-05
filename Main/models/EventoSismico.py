@@ -3,35 +3,35 @@ from django.db import models
 from .AlcanceSismo import AlcanceSismo
 from .CambioEstado import CambioEstado
 from .ClasificacionSismo import ClasificacionSismo
-from .EstadoEventoSismico import *
+from .EstadosEventoSismico.EstadoEventoSismico import *
 from .MagnitudRichter import MagnitudRichter
 from .OrigenDeGeneracion import OrigenDeGeneracion
 from .SerieTemporal import SerieTemporal
 from .Empleado import Empleado
-from .Confirmado import Confirmado
-from .Rechazado import Rechazado
-from .Autodetectado import Autodetectado
-from .BloqueadoEnRevision import BloqueadoEnRevision
-from ..views import GestorResultRevManual
+from .EstadosEventoSismico.Confirmado import Confirmado
+from .EstadosEventoSismico.Rechazado import Rechazado
+from .EstadosEventoSismico.Autodetectado import Autodetectado
+from .EstadosEventoSismico.BloqueadoEnRevision import BloqueadoEnRevision
+
 
 class EventoSismico(models.Model):
     fechaHoraFin = models.DateTimeField(null=True, blank=True)
     fechaHoraOcurrencia = models.DateTimeField(null=True, blank=True)
-    idCompuesto = models.CharField(
-        max_length=1000, primary_key=True, editable=False)
+    idCompuesto = models.CharField(max_length=1000, primary_key=True, editable=False)
     latitudEpicentro = models.FloatField()
     longitudEpicentro = models.FloatField()
     latitudHipocentro = models.FloatField()
     longitudHipocentro = models.FloatField()
     magnitud = models.ForeignKey(MagnitudRichter, on_delete=models.CASCADE)
-    origenGeneracion = models.ForeignKey(
-        OrigenDeGeneracion, on_delete=models.CASCADE)
+    origenGeneracion = models.ForeignKey(OrigenDeGeneracion, on_delete=models.CASCADE)
     alcanceSismo = models.ForeignKey(AlcanceSismo, on_delete=models.CASCADE)
     estadoActual = models.ForeignKey(
-        Estado, on_delete=models.CASCADE, related_name="eventos_actuales", db_column='estado_nombreEstado'
+        Estado,
+        on_delete=models.CASCADE,
+        related_name="eventos_actuales",
+        db_column="estado_nombreEstado",
     )
-    clasificacion = models.ForeignKey(
-        ClasificacionSismo, on_delete=models.CASCADE)
+    clasificacion = models.ForeignKey(ClasificacionSismo, on_delete=models.CASCADE)
     cambiosEstado = models.ManyToManyField(CambioEstado)
     serieTemporal = models.ManyToManyField(SerieTemporal)
 
@@ -69,25 +69,20 @@ class EventoSismico(models.Model):
         return "\n".join(
             [
                 color("=== Evento Sísmico ===", "1;34"),
-                color(
-                    f"Fecha/Hora de Ocurrencia: {self.fechaHoraOcurrencia}", "1;32"),
+                color(f"Fecha/Hora de Ocurrencia: {self.fechaHoraOcurrencia}", "1;32"),
                 color(f"Fecha/Hora de Fin: {self.fechaHoraFin}", "1;32"),
                 color(f"Latitud Epicentro: {self.latitudEpicentro}", "1;36"),
                 color(f"Longitud Epicentro: {self.longitudEpicentro}", "1;36"),
                 color(f"Latitud Hipocentro: {self.latitudHipocentro}", "1;36"),
-                color(
-                    f"Longitud Hipocentro: {self.longitudHipocentro}", "1;36"),
+                color(f"Longitud Hipocentro: {self.longitudHipocentro}", "1;36"),
                 color(f"Magnitud: {dict_from_obj(self.magnitud)}", "1;35"),
                 color(
                     f"Origen de Generación: {dict_from_obj(self.origenGeneracion)}",
                     "1;35",
                 ),
-                color(
-                    f"Alcance del Sismo: {dict_from_obj(self.alcanceSismo)}", "1;35"),
-                color(
-                    f"Estado Actual: {dict_from_obj(self.estadoActual)}", "1;33"),
-                color(
-                    f"Clasificación: {dict_from_obj(self.clasificacion)}", "1;33"),
+                color(f"Alcance del Sismo: {dict_from_obj(self.alcanceSismo)}", "1;35"),
+                color(f"Estado Actual: {dict_from_obj(self.estadoActual)}", "1;33"),
+                color(f"Clasificación: {dict_from_obj(self.clasificacion)}", "1;33"),
                 color(
                     f"Cantidad de Cambios de Estado: {self.cambiosEstado.count()}",
                     "1;31",
@@ -112,8 +107,7 @@ class EventoSismico(models.Model):
             "latitudHipocentro": self.latitudHipocentro,
             "longitudHipocentro": self.longitudHipocentro,
             "magnitud": (
-                self.magnitud.numero if hasattr(
-                    self.magnitud, "numero") else 10
+                self.magnitud.numero if hasattr(self.magnitud, "numero") else 10
             ),
         }
 
@@ -137,9 +131,9 @@ class EventoSismico(models.Model):
         self.estadoActual = estado
         self.save()
 
-    def bloquear(self, gestor: GestorResultRevManual, fecha_actual) -> None:
+    def bloquear(self, gestor, fecha_actual) -> None:
         self.estadoActualEjecucion.bloquear(
-            evento_sismico=self, fecha_actual=fecha_actual
+            gestor=gestor, evento_sismico=self, fecha_actual=fecha_actual
         )
 
     def buscarSerieTemporal(self, sismografos: list):
