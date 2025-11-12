@@ -1,6 +1,11 @@
 let evento = null;
 let accionSeleccionada = null;
 
+let event_handler_div = document.getElementById('event-handler')
+let event_text = document.getElementById('event-text')
+let event_icon = document.getElementById('event-icon')
+
+
 const selectAccion = document.getElementById('accion');
 
 accionSeleccionada = selectAccion.value;
@@ -9,6 +14,41 @@ selectAccion.addEventListener('change', function () {
   accionSeleccionada = this.value;
   console.log('Acción seleccionada:', accionSeleccionada);
 });
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function eventHandler(event_message, event_type) {
+  event_handler_div.classList.remove("event-success", "event-error");
+  event_handler_div.style.opacity = "1";
+  event_handler_div.style.display = "flex";
+  event_text.textContent = event_message;
+
+  switch (event_type) {
+      case "error":
+          event_icon.textContent = "⚠️";
+          event_handler_div.classList.add("event-error");
+          await sleep(4000);
+          break;
+
+      case "success":
+          event_icon.textContent = "✅";
+          event_handler_div.classList.add("event-success");
+          await sleep(1200);
+          break;
+
+      default:
+          return;
+  }
+
+  for (let i = 100; i >= 0; i--) {
+      event_handler_div.style.opacity = (i / 100).toFixed(2);
+      await sleep(10);
+  }
+
+  event_handler_div.style.display = "none";
+}
 
 
 const modalElement = document.getElementById('confirmacionModal');
@@ -90,6 +130,7 @@ function tomarModificacionDatos(id_evento, enviarDatos = false, magnitud = null,
       return response.json();
     })
     .then(data => {
+      eventHandler(event_message='Tu acción se registro correctamente', event_type='success')
       console.log(data);
     })
     .catch(error => {
