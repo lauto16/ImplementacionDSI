@@ -1,9 +1,6 @@
-from Main.models import (
-    Empleado,
-    Sesion,
-    Sismografo,
-    EventoSismico,
-)
+from Main.models.Sesion import Sesion
+from Main.models.EventoSismico import EventoSismico
+from Main.models.Sismografo import Sismografo
 from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -115,10 +112,10 @@ class GestorResultRevManual:
             x.obtenerDatos() for x in self.eventosAutodetectados if x is not None
         ]
         return self.datos_eventos_autodetectados
-
+    
     def bloquearEventoSis(self) -> None:
-        self.eventoSisActual.bloquear(
-            fecha_actual=self.fechaHoraActual, empleado=self.empleado
+        self.eventoSisActual.bloquear(gestor=self,
+            fecha_actual=self.fechaHoraActual
         )
 
     def ordenarEventosSisPorFyH(self) -> None:
@@ -128,7 +125,7 @@ class GestorResultRevManual:
                 x["fechaHoraOcurrencia"], "%Y-%m-%d %H:%M:%S"
             ),
         )
-    # STATE
+    # AHORA SE HACE CON STATE
     # def buscarEstadoBloqueadoEnRevision(self) -> Estado:
     #     for estado in self.estados:
     #         if estado.esAmbitoEventoSis():
@@ -158,7 +155,7 @@ class GestorResultRevManual:
 
     def llamarCUGenerarSismograma(self):
         return "Se llamó al CU generar Sismograma"
-    # STATE
+    # AHORA SE HACE CON STATE
     # def buscarEstadoRechazado(self) -> Estado:
     #     for estado in self.estados:
     #         if estado.esAmbitoEventoSis():
@@ -217,7 +214,7 @@ class GestorResultRevManual:
             )
 
         self.finCU()
-    # STATE
+    # AHORA SE HACE CON STATE
     # def buscarEstadoConfirmado(self) -> Estado:
     #     for estado in self.estados:
     #         if estado.esAmbitoEventoSis():
