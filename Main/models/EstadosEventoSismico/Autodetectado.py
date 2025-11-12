@@ -31,7 +31,6 @@ class Autodetectado(EstadoEventoSismico):
         cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
 
         cambio_estado_nuevo = self.crearCambioEstado(
-            evento_sismico=evento_sismico,
             fecha_actual=fecha_actual,
             estado=estadoBloqueadoEnRevision.estadoPersistencia,
             empleado=empleado,
@@ -49,5 +48,3 @@ class Autodetectado(EstadoEventoSismico):
         
         # no se contempla en diagrama por ser parte del guardado en bd
         evento_sismico.save()
-
-        

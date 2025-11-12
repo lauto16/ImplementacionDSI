@@ -147,9 +147,9 @@ class EventoSismico(models.Model):
             evento_sismico=self, fecha_actual=fecha_actual, empleado=empleado
         )
 
-    def rechazar(self, fecha_actual, empleado: Empleado) -> None:
+    def rechazar(self, fecha_actual, gestor) -> None:
         self.estadoActualEjecucion.rechazar(
-            evento_sismico=self, fecha_actual=fecha_actual, empleado=empleado
+            evento_sismico=self, fecha_actual=fecha_actual, gestor=gestor
         )
 
     def esAutodetectado(self):

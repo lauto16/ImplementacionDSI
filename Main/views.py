@@ -199,32 +199,20 @@ class GestorResultRevManual:
 
         self.eventoSisActual = self.getEventoPorId(id=evento_id)
         self.fechaHoraActual = self.getFechaHoraActual()
-        # TODO creo que deberia ser aca el CE
         if accion == "rechazar":
             self.empleado = self.sesion.buscarUsuarioLogueado()
-            self.eventoSisActual.rechazar(
-                fecha_actual=self.fechaHoraActual, empleado=self.empleado)
+            self.eventoSisActual.rechazar(gestor=self,
+                fecha_actual=self.fechaHoraActual)
 
         elif accion == "confirmar":
             # caso alternativo: Si la opción seleccionada es Confirmar evento, se actualiza el estado del evento sísmico a confirmado, registrando la fecha y hora actual como fecha de confirmación.
-            # self.estado_Confirmado = self.buscarEstadoConfirmado()
             self.eventoSisActual.confirmar(
                 fecha_actual=self.fechaHoraActual,
                 empleado=self.empleado,
             )
 
         self.finCU()
-    # AHORA SE HACE CON STATE
-    # def buscarEstadoConfirmado(self) -> Estado:
-    #     for estado in self.estados:
-    #         if estado.esAmbitoEventoSis():
-    #             if estado.esConfirmado():
-    #                 return estado
 
-    # def crearCambioEstado(self, fecha_actual, estado, empleado: Empleado) -> None:
-    #     self.eventoSisActual.crearCambioEstado(
-    #         fecha_actual=fecha_actual, estado=estado, empleado=empleado
-    #     )
 
     def finCU(self):
         return "FIN CU"

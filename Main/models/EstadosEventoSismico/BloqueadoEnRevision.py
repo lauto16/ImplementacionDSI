@@ -8,6 +8,9 @@ class BloqueadoEnRevision(EstadoEventoSismico):
         self.nombreEstado = "BloqueadoEnRevision"
         self.estadoPersistencia = self.setEstadoPersistencia()
 
+    def buscarUsuarioLogueado(self, gestor):
+        return gestor.sesion.buscarUsuarioLogueado()
+    
     def confirmar(
         self, evento_sismico, fecha_actual, empleado
     ) -> None:
@@ -23,7 +26,6 @@ class BloqueadoEnRevision(EstadoEventoSismico):
 
         cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
         self.crearCambioEstado(
-            evento_sismico=evento_sismico,
             fecha_actual=fecha_actual,
             estado=estadoConfirmado.estadoPersistencia,
             empleado=empleado,
@@ -32,9 +34,13 @@ class BloqueadoEnRevision(EstadoEventoSismico):
         evento_sismico.estadoActualEjecucion = estadoConfirmado
 #
     def rechazar(
-        self, evento_sismico, fecha_actual, empleado
+        self, evento_sismico, fecha_actual, gestor
     ) -> None:
         print('cambiando a estado rechazado')
+        
+        # buscar el empleado actual
+        empleado = self.buscarUsuarioLogueado(gestor)
+        
         # crear el estado Rechazado
         estadoRechazado = Rechazado()
         
@@ -43,14 +49,24 @@ class BloqueadoEnRevision(EstadoEventoSismico):
         for cambio_estado in evento_sismico.cambiosEstado.all():
             if cambio_estado.esActual():
                 cambio_estado_obt = cambio_estado
+                break
             
         cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
 
-        self.crearCambioEstado(
-            evento_sismico=evento_sismico,
+        cambio_estado_nuevo = self.crearCambioEstado(
             empleado=empleado,
             fecha_actual=fecha_actual,
             estado=estadoRechazado.estadoPersistencia,
         )
         
+        # set del estado en persistencia (fk)
+        evento_sismico.estadoActual = estadoRechazado.estadoPersistencia
+        
+        # add del estado en ejecucion
         evento_sismico.estadoActualEjecucion = estadoRechazado
+
+        # agregar cambio estado
+        evento_sismico.cambiosEstado.add(cambio_estado_nuevo)
+            
+        # no se contempla en diagrama por ser parte del guardado en bd
+        evento_sismico.save()

@@ -18,18 +18,14 @@ class EstadoEventoSismico:
                 return estado
         return None
 
-    def crearCambioEstado(self, evento_sismico, fecha_actual, estado: Estado, empleado=None) -> CambioEstado:
+    def crearCambioEstado(self, fecha_actual, estado: Estado, empleado=None) -> CambioEstado:
         nuevo_estado_cambio_estado = CambioEstado.objects.create(
             fechaHoraInicio=fecha_actual,
             fechaHoraFin=None,
             estado=estado,
             responsableInspeccion=empleado,
         )
-        #evento_sismico.cambiosEstado.add(nuevo_estado_cambio_estado)
-        #evento_sismico.estadoActual = estado
-        
-        # guardar cambios en la bd
-        #evento_sismico.save()
+
         return nuevo_estado_cambio_estado
     
     def bloquear(self, evento_sismico, fecha_actual) -> None:
