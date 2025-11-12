@@ -7,13 +7,16 @@ class Autodetectado(EstadoEventoSismico):
         self.nombreEstado = "Autodetectado"
         self.estadoPersistencia = self.setEstadoPersistencia()
 
+    def buscarUsuarioLogueado(self, gestor):
+        return gestor.sesion.buscarUsuarioLogueado()
+    
     def bloquear(
         self, evento_sismico, fecha_actual, gestor
     ) -> None:
         print('cambiando a estado bloqueado en revision')
 
         # buscar el empleado actual
-        empleado = gestor.sesion.buscarUsuarioLogueado()
+        empleado = self.buscarUsuarioLogueado(gestor)
 
         # crear el estado BloqueadoEnRevision
         estadoBloqueadoEnRevision = BloqueadoEnRevision()
