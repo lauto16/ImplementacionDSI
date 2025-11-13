@@ -1,0 +1,74 @@
+body {
+    background-color: #121212;
+    color: #f0f0f0;
+    height: 100%;
+  }
+
+  .form-control,
+  .form-select {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border: 1px solid #444;
+  }
+
+  .form-control:disabled,
+  .form-select:disabled {
+    background-color: #2a2a2a;
+    color: #bbbbbb;
+  }
+
+  fieldset {
+    background-color: #1c1c1c;
+  }
+
+  .form-check-label,
+  .form-label {
+    color: #e0e0e0;
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+
+  .btn-secondary:hover {
+    background-color: #545b62;
+  }
+
+  select option {
+    background-color: #1e1e1e;
+    color: #fff;
+  }
+
+  legend {
+    color: #f8f9fa;
+  }
+
+  .border {
+    border-color: #444 !important;
+  }
+
+  .card {
+    background-color: #1e1e1e;
+    border: 1px solid #444;
+  }
+
+  .list-group-item {
+    background-color: #2a2a2a;
+    color: #ffffff;
+    border: 1px solid #444;
+  }
+
+  .list-group-item:hover {
+    background-color: #3a3a3a;
+    color: #ffffff;
+  }
