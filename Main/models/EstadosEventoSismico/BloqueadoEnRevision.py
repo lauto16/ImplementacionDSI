@@ -12,9 +12,12 @@ class BloqueadoEnRevision(EstadoEventoSismico):
         return gestor.sesion.buscarUsuarioLogueado()
     
     def confirmar(
-        self, evento_sismico, fecha_actual, empleado
+        self, evento_sismico, fecha_actual, gestor
     ) -> None:
         print('cambiando a estado confirmado')
+        
+        empleado = self.buscarUsuarioLogueado(gestor)
+        
         # crear el estado Confirmado
         estadoConfirmado = Confirmado()
 
@@ -25,14 +28,25 @@ class BloqueadoEnRevision(EstadoEventoSismico):
                 cambio_estado_obt = cambio_estado
 
         cambio_estado_obt.setFechaHoraFin(fecha_actual=fecha_actual)
-        self.crearCambioEstado(
+        
+        cambio_estado_nuevo=self.crearCambioEstado(
             fecha_actual=fecha_actual,
             estado=estadoConfirmado.estadoPersistencia,
             empleado=empleado,
         )
         
+        # set del estado en persistencia (fk)
+        evento_sismico.estadoActual = estadoConfirmado.estadoPersistencia
+        
+        # add del estado en ejecucion
         evento_sismico.estadoActualEjecucion = estadoConfirmado
-#
+
+        # agregar cambio estado
+        evento_sismico.cambiosEstado.add(cambio_estado_nuevo)
+            
+        # no se contempla en diagrama por ser parte del guardado en bd
+        evento_sismico.save()
+        
     def rechazar(
         self, evento_sismico, fecha_actual, gestor
     ) -> None:

@@ -28,13 +28,13 @@ class EstadoEventoSismico:
 
         return nuevo_estado_cambio_estado
     
-    def bloquear(self, evento_sismico, fecha_actual) -> None:
+    def bloquear(self, evento_sismico, fecha_actual, gestor) -> None:
         pass
 
-    def confirmar(self, evento_sismico, fecha_actual) -> None:
+    def confirmar(self, evento_sismico, fecha_actual, gestor) -> None:
         pass
 
-    def rechazar(self, evento_sismico, fecha_actual) -> None:
+    def rechazar(self, evento_sismico, fecha_actual, gestor) -> None:
         pass
 
     def esAutodetectado(self) -> bool:

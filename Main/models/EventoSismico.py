@@ -142,9 +142,9 @@ class EventoSismico(models.Model):
             resultado.append(serieTemporal.getDatosMuestra(sismografos))
         return resultado
 
-    def confirmar(self, fecha_actual, empleado: Empleado) -> None:
+    def confirmar(self, fecha_actual, gestor) -> None:
         self.estadoActualEjecucion.confirmar(
-            evento_sismico=self, fecha_actual=fecha_actual, empleado=empleado
+            evento_sismico=self, fecha_actual=fecha_actual, gestor=gestor
         )
 
     def rechazar(self, fecha_actual, gestor) -> None:

@@ -22,7 +22,7 @@ class GestorResultRevManual:
         self.clasificacionEventoSis = None
         self.origenGeneracionEventoSis = None
         self.ordenadoPorES = None
-        self.sesion = Sesion.objects.get(usuario='cgomez@example.com')
+        self.sesion = Sesion.objects.get(usuario="cgomez@example.com")
 
         self.datos_eventos_autodetectados = []
         self.empleado = self.sesion.buscarUsuarioLogueado()
@@ -69,12 +69,11 @@ class GestorResultRevManual:
     def tomarSelEventoSis(self, id_evento: str) -> None:
         # se necesita buscar el evento elegio entre los autodetectados
         self.eventosAutodetectados = self.buscarEventosAutodetectados()
-        self.eventoSisActual = self.getEventoAutodetectado(
-            idCompuesto=id_evento)
+        self.eventoSisActual = self.getEventoAutodetectado(idCompuesto=id_evento)
 
         # luego de obtener los datos de nuevo (la request borra los objetos) continuamos con el CU
-        # self.estado_BloqueadoEnRevision = self.buscarEstadoBloqueadoEnRevision()
-        self.fechaHoraActual = self.getFechaHoraActual()
+
+        # AQUI COMIENZA LA IMPLEMENTACION DEL PATRON STATE --------------------------------------------------------------------------------------
         self.bloquearEventoSis()
         self.buscarDatosEventoSis()
 
@@ -112,11 +111,10 @@ class GestorResultRevManual:
             x.obtenerDatos() for x in self.eventosAutodetectados if x is not None
         ]
         return self.datos_eventos_autodetectados
-    
+
     def bloquearEventoSis(self) -> None:
-        self.eventoSisActual.bloquear(gestor=self,
-            fecha_actual=self.fechaHoraActual
-        )
+        self.fechaHoraActual = self.getFechaHoraActual()
+        self.eventoSisActual.bloquear(gestor=self, fecha_actual=self.fechaHoraActual)
 
     def ordenarEventosSisPorFyH(self) -> None:
         self.datos_eventos_autodetectados = sorted(
@@ -125,12 +123,6 @@ class GestorResultRevManual:
                 x["fechaHoraOcurrencia"], "%Y-%m-%d %H:%M:%S"
             ),
         )
-    # AHORA SE HACE CON STATE
-    # def buscarEstadoBloqueadoEnRevision(self) -> Estado:
-    #     for estado in self.estados:
-    #         if estado.esAmbitoEventoSis():
-    #             if estado.esBloqueadoEnRevision():
-    #                 return estado
 
     def buscarEventosAutodetectados(self) -> list:
         for evento in self.eventos:
@@ -155,13 +147,13 @@ class GestorResultRevManual:
 
     def llamarCUGenerarSismograma(self):
         return "Se llamó al CU generar Sismograma"
-    # AHORA SE HACE CON STATE
-    # def buscarEstadoRechazado(self) -> Estado:
-    #     for estado in self.estados:
-    #         if estado.esAmbitoEventoSis():
-    #             if estado.esRechazado():
-    #                 return estado
 
+    def rechazarEventoSis(self):
+        self.fechaHoraActual = self.getFechaHoraActual()
+        self.eventoSisActual.rechazar(
+                gestor=self, fecha_actual=self.fechaHoraActual
+            )
+    
     def tomarOpcionAccion(self, accion, evento_id, alcance, origen, magnitud, save):
         if not (
             self.validarDatosSismicos(alcance, type="texto")
@@ -177,8 +169,7 @@ class GestorResultRevManual:
         if save:
             evento_modificado = None
             try:
-                evento_modificado = EventoSismico.objects.get(
-                    idCompuesto=evento_id)
+                evento_modificado = EventoSismico.objects.get(idCompuesto=evento_id)
             except EventoSismico.DoesNotExist:
                 return JsonResponse(
                     {"success": False, "message": "El evento sismico no existe"}
@@ -199,20 +190,18 @@ class GestorResultRevManual:
 
         self.eventoSisActual = self.getEventoPorId(id=evento_id)
         self.fechaHoraActual = self.getFechaHoraActual()
+
         if accion == "rechazar":
-            self.empleado = self.sesion.buscarUsuarioLogueado()
-            self.eventoSisActual.rechazar(gestor=self,
-                fecha_actual=self.fechaHoraActual)
+            self.rechazarEventoSis()
 
         elif accion == "confirmar":
             # caso alternativo: Si la opción seleccionada es Confirmar evento, se actualiza el estado del evento sísmico a confirmado, registrando la fecha y hora actual como fecha de confirmación.
             self.eventoSisActual.confirmar(
                 fecha_actual=self.fechaHoraActual,
-                empleado=self.empleado,
+                gestor=self
             )
 
         self.finCU()
-
 
     def finCU(self):
         return "FIN CU"
@@ -269,9 +258,7 @@ class InterfazResultRevManual(View):
         # representa al metodo tomarSelEventoSis()
         if action == "tomar_sel_evento_sismico":
             id_evento = request.GET.get("id_evento")
-            diccionario_retorno = self.gestor.tomarSelEventoSis(
-                id_evento=id_evento
-            )
+            diccionario_retorno = self.gestor.tomarSelEventoSis(id_evento=id_evento)
             res = {
                 "serieTemp": diccionario_retorno["datos_entrega"],
                 "datosEvenSis": diccionario_retorno["datosEvenSis"],
